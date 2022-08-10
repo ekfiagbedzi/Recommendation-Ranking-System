@@ -10,7 +10,7 @@ def resize_image(final_size, im):
     new_im = Image.new("RGB", (final_size, final_size))
     new_im.paste(
         im,
-        ((final_size-new_image_size[0]//2, (final_size-new_image_size[1])//2)))
+        (0, 0))
     return new_im
 
 if __name__ == "__main__":
@@ -21,3 +21,5 @@ if __name__ == "__main__":
         im = Image.open(path + item)
         new_im = resize_image(final_size, im)
         new_im.save(f"{n}_resized.jpg")
+
+
