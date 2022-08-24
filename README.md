@@ -10,4 +10,8 @@ Three datasets are available for this project.
 ### Cleaning of datasets
 First I checked if there are any missing data in both `images.csv` and `products.csv`. There was none.
 Next I reshaped all `.jpg` images to a consistent size of (3, 512, 512) using the python library `Pillow`
+I then filtered the Images.csv dataset by selecting those that had a corresponiding product ID.
+I then merged the columns of the `Products.csv` to `Images.csv` to get the full complement of data
+Next, I attached the numpy array associated with each image as an array to a column named `image_array`
+
 
