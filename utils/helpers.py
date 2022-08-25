@@ -1,5 +1,5 @@
 from PIL import Image
-from numpy import asarray
+from numpy import array
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -34,4 +34,26 @@ def get_element(list, position):
 
 
 def image_to_array(img_id):
-    return "/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
+    img = Image.open(
+        "/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
+        )
+    img_arr = asarray(img)
+    return img_arr
+
+# %%
+from PIL import Image
+from numpy import asarray
+
+#img = Image.open("/home/ubuntu/Recommendation-Ranking-System/cleaned_images/7cdb36be-888e-4dc8-81ed-0b98e9e6a1c9_resized.jpg")
+#asarray(img)
+
+def image_to_array(img_id):
+    img = Image.open(
+        "/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
+        )
+    return asarray(img)
+
+image_to_array("7cdb36be-888e-4dc8-81ed-0b98e9e6a1c9")
+
+
+# %%
