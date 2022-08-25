@@ -1,4 +1,5 @@
 from PIL import Image
+from numpy import asarray
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -19,3 +20,18 @@ def resize_image(final_size, im):
         im,
         (0, 0)) # define coordinate as upper left corner
     return new_im
+
+
+def get_element(list, position):
+    """Get a member from a pandas series of lists by position
+       Args:
+            list: (python list) A python list
+            position: Index to select member
+       Return:
+             (obj) A member of list from position
+    """
+    return list[position]
+
+
+def image_to_array(img_id):
+    return "/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
