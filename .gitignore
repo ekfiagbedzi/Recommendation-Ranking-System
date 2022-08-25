@@ -2,5 +2,4 @@
 mypython
 recommendation
 *.egg-info
-*.jpg
 *__pycache*
