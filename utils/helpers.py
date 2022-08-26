@@ -1,5 +1,6 @@
 import cv2
 from numpy import array
+from PIL import Image
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -34,7 +35,12 @@ def get_element(list, position):
 
 
 def image_to_array(img_id):
-    img=None
+    """Convert Image to a numpy array
+       Args:
+            img_id (str): ID of Image
+       Return:
+            Array of pixel values
+    """
     img = cv2.imread("/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
