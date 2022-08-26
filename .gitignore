@@ -3,3 +3,5 @@ mypython
 recommendation
 *.egg-info
 *__pycache*
+cleaned_images
+*.jpg
