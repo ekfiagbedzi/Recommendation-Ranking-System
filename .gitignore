@@ -5,3 +5,4 @@ recommendation
 *__pycache*
 cleaned_images
 *.jpg
+image_product.pkl
