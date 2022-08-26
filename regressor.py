@@ -1,4 +1,3 @@
-#%%
 # import libraries
 import pandas as pd
 
@@ -11,14 +10,11 @@ from sklearn import metrics
 
 
 # read cleaned data
-products = pd.read_csv("Products_cleaned.csv",
-            lineterminator="\n",
-            usecols=["product_name", "product_description", "location", "price"]
-)
+products = pd.read_pickle("image_product.pkl")
 
 
 # define feature matrix X and response vector y
-X = products.drop("price", axis=1)
+X = products.loc[:, ["product_name", "product_description", "location"]]
 y = products.price
 
 
@@ -48,4 +44,3 @@ y_pred = pipe.predict(X_test)
 # calculate rmse of predictions
 print("RMSE of model = {}".format(
     metrics.mean_squared_error(y_test, y_pred, squared=False)))
-# %%
