@@ -66,3 +66,7 @@ def image_to_array(img_id):
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
+
+
+def flatten_array(arr):
+    return arr.ravel()
