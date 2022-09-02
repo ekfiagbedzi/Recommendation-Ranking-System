@@ -1,3 +1,4 @@
+# %%
 # import libraries
 import os
 
@@ -78,3 +79,5 @@ combined.create_time = pd.to_datetime(combined.create_time)
 
 # save data as a pickle file
 pd.to_pickle(combined, "../image_product.pkl")
+
+# %%
