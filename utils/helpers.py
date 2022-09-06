@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 import cv2
 from PIL import Image
 import fnmatch
@@ -68,5 +70,22 @@ def image_to_array(img_id):
     return img
 
 
-def flatten_array(arr):
-    return arr.ravel()
+def flatten_array(ser):
+    """Converts array of any shape in a Series to 1D array
+       Args:
+            ser (pandas.Series): Series object containing arrays
+       Return:
+            pandas.Series object containing 1D arrays
+    """
+    ser.apply(lambda x: x.resize(2352))
+    return ser
+
+
+def convert_arrays_to_columns(ser):
+    """Convert a pandas Series of 1D arrays of shape n into n DataFrame columns
+       Args: (ser)
+            pandas.Series object containing 1D arrays of shape (n,)
+       Return: (pandas.DataFrame)
+            pandas DataFrame with n columns
+    """
+    return pd.DataFrame(ser.values.tolist())
