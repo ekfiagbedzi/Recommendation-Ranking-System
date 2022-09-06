@@ -1,18 +1,19 @@
 # import libraries
-from utils.helpers import get_element, flatten_array
+from utils.helpers import get_element, flatten_array, convert_arrays_to_columns
 
 import numpy as np
 import pandas as pd
 
+from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, FunctionTransformer
-from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
-
 
 # instatiate models and transformers
 le = LabelEncoder()
+ft1 = FunctionTransformer(flatten_array)
+ft2 = FunctionTransformer(convert_arrays_to_columns)
 clf = RandomForestClassifier()
 
 # import data
@@ -39,9 +40,9 @@ print("Testing input shape", X_test.shape)
 print("Testing target shape", y_test.shape)
 
 
-def flatten_array(ser):
-    ser.apply(lambda x: x.resize(9408))
-    return ser
-
-
-print((flatten_array(X_test)))
+# make pipeline of transformers and classifier
+pipe = make_pipeline(ft1, ft2, clf)
+# train the classifier
+pipe.fit(X_train, y_train)
+# make predictions on out of sample data
+print(metrics.accuracy_score(y_test, pipe.predict(X_test)))
