@@ -5,6 +5,7 @@ import cv2
 from PIL import Image
 import fnmatch
 
+from torch.utils.data import Dataset
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -89,3 +90,15 @@ def convert_arrays_to_columns(ser):
             pandas DataFrame with n columns
     """
     return pd.DataFrame(ser.values.tolist())
+
+
+class ImageData(Dataset):
+    def __init__(self, features, labels):
+        self.features = features
+        self.labels = labels
+
+    def __getitem__(self, index):
+        return self.features.iloc[index], self.labels[index]
+
+    def __len__(self):
+        return self.features.shape[0]
