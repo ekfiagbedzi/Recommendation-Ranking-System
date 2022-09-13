@@ -4,7 +4,7 @@ A model that finds, recommends and ranks products, based on a user's search and 
 ### Description of Datasets
 Three datasets are available for this project.
 1. `images.csv` This file contains all the image filenames and their associated labels
-2. `Products.csv` This is the main dataset and it contains all the features needed to train the model includin `product_name`, `price` and location.
+2. `Products.csv` This is the main dataset and it contains all the features needed to train the model includin `product_name`, `price` and `location`.
 3. `.jpg` These are the corresponding to the products
 
 ### Cleaning of datasets
