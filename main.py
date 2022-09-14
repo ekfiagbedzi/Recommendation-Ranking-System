@@ -17,3 +17,5 @@ X = data.image_array
 y = le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
 # %%
+image_data = ImageData(X, y)
+# %%
