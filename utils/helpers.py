@@ -94,6 +94,7 @@ def convert_arrays_to_columns(ser):
 
 class ImageData(Dataset):
     def __init__(self, features, labels):
+        super().__init__()
         self.features = features
         self.labels = labels
 
