@@ -35,14 +35,13 @@ def train(model, features, targets):
 
 if __name__ == "__main__":
    
-    le = LabelEncoder()
     data = pd.read_pickle("image_product.pkl")
-    X = data.image_array
-    y = le.fit_transform(
-        data.category.str.split("/").apply(get_element, position=0))
-    image_data = ImageData(X, y)
+    image_data = ImageData.load_data(data)
+    gggg
     loader = DataLoader(image_data, 5, True)
     features, labels = next(iter(loader))
+    print(features[0], labels[0])
+    ggggg
     features = FF.to_tensor(features)
     labels = FF.to_tensor(labels)
     model = NN()
