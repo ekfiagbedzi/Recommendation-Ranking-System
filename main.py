@@ -37,13 +37,7 @@ if __name__ == "__main__":
    
     data = pd.read_pickle("image_product.pkl")
     image_data = ImageData.load_data(data)
-    gggg
     loader = DataLoader(image_data, 5, True)
     features, labels = next(iter(loader))
     print(features[0], labels[0])
-    ggggg
-    features = FF.to_tensor(features)
-    labels = FF.to_tensor(labels)
-    model = NN()
-    train(model, F.tofeatures, labels)
     
