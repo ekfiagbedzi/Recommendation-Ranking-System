@@ -1,11 +1,18 @@
 import os
 
+import numpy as np
 import pandas as pd
 import cv2
 from PIL import Image
 import fnmatch
+import torchvision
+from sklearn.preprocessing import LabelEncoder
 
+import torch
 from torch.utils.data import Dataset
+
+
+le = LabelEncoder()
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -65,7 +72,7 @@ def image_to_array(img_id):
             Array of pixel values
     """
     img = cv2.imread(
-        "/home/ubuntu/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
+        "/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
@@ -93,13 +100,36 @@ def convert_arrays_to_columns(ser):
 
 
 class ImageData(Dataset):
-    def __init__(self, features, labels):
+    
+    def __init__(self, features=None, labels=None):
         super().__init__()
         self.features = features
         self.labels = labels
 
     def __getitem__(self, index):
-        return self.features.iloc[index], self.labels[index]
+        return self.features[index], self.labels[index]
 
     def __len__(self):
-        return self.features.shape[0]
+        return len(self.features)
+
+    
+    @classmethod
+    def load_data(cls, data):
+        features = []
+        labels = []
+        ind = 0
+        IDs = data.id.tolist()
+        cats = le.fit_transform(
+        data.category.str.split("/").apply(get_element, position=0))
+        for ID in IDs:
+            img_path = "/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(ID)
+            with Image.open(img_path) as im:
+                features.append(torchvision.transforms.functional.to_tensor(im))
+            labels.append(torch.tensor(cats[ind]))
+            ind += 1
+        return cls(features, labels)
+
+        # use paths to load images
+        # use paths to get corresponding labels
+        # convert images to tensor
+        # zip tensors and labels
