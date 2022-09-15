@@ -30,12 +30,20 @@ class NN(torch.nn.Module):
 
 def train(model, epochs=10):
 
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+
     for epoch in range(epochs):
+        ind = 1
         for batch in loader:
             features, labels = batch
             predictions = model(features)
             loss = F.cross_entropy(predictions, labels)
             loss.backward()
+            print("Batch {}: Loss = {}".format(ind, loss.item()))
+            optimizer.step()
+            optimizer.zero_grad()
+            ind += 1
+            
         print("Epoch {}: Loss is {}".format(epoch+1, loss.item()))
 
 if __name__ == "__main__":
