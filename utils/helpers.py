@@ -99,7 +99,7 @@ def convert_arrays_to_columns(ser):
     return pd.DataFrame(ser.values.tolist())
 
 
-class ImageData(Dataset):
+class ImageDataset(Dataset):
     
     def __init__(self, features=None, labels=None):
         super().__init__()
