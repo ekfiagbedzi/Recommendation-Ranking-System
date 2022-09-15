@@ -19,7 +19,7 @@ class NN(torch.nn.Module):
             torch.nn.Linear(2352, 64),
             torch.nn.ReLU(),
             torch.nn.Linear(64, 13),
-            torch.nn.Softmax()
+            torch.nn.Softmax(1)
         )
 
 
@@ -39,5 +39,5 @@ if __name__ == "__main__":
     image_data = ImageData.load_data(data)
     loader = DataLoader(image_data, 5, True)
     features, labels = next(iter(loader))
-    print(features[0], labels[0])
-    
+    model = NN()
+    train(model, features, labels)
