@@ -1,12 +1,9 @@
-import typing
-from utils.helpers import get_element, ImageDataset
+from utils.helpers import ImageDataset
 
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
 import torch
 import torch.nn.functional as F
-import torchvision.transforms.functional as FF
 from torch.utils.data import DataLoader
 
 
@@ -31,17 +28,19 @@ class NN(torch.nn.Module):
         return self.layers(X)
 
 
-def train(model, features, targets):
-    predictions = model(features)
-    loss = F.cross_entropy(predictions, targets)
-    loss.backward()
-    print("Loss is", loss.item())
+def train(model, epochs=10):
+
+    for epoch in range(epochs):
+        for batch in loader:
+            features, labels = batch
+            predictions = model(features)
+            loss = F.cross_entropy(predictions, labels)
+            loss.backward()
+        print("Epoch {}: Loss is {}".format(epoch+1, loss.item()))
 
 if __name__ == "__main__":
-   
     data = pd.read_pickle("image_product.pkl")
     image_data = ImageDataset.load_data(data)
     loader = DataLoader(image_data, 5, True)
-    features, labels = next(iter(loader))
     model = NN()
-    train(model, features, labels)
+    train(model)
