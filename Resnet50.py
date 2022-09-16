@@ -3,7 +3,7 @@ import time
 from utils.helpers import ImageDataset
 
 import pandas as pd
-
+from sklearn.model_selection import train_test_split
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -28,6 +28,7 @@ def train(model, epochs=10):
     batch_ind = 0
     for epoch in range(epochs):
         for batch in loader:
+            optimizer.zero_grad()
             features, labels = batch
             features, labels = features.to(device), labels.to(device)
             predictions = model(features)
@@ -35,8 +36,15 @@ def train(model, epochs=10):
             loss.backward()
             #print("Loss = {}".format(loss.item()))
             optimizer.step()
-            optimizer.zero_grad()
             writer.add_scalar("Loss", loss.item(), batch_ind)
+
+            with torch.no_grad():
+                for features, labels in loader:
+                    features, labels = features.to(device), labels.to(device)
+                    predictions = model(features)
+                    loss = F.cross_entropy(predictions, labels)
+                    writer.add_scalar("Loss", loss.item(), batch_ind)
+
             batch_ind += 1            
         print("Epoch {}: Loss is {}".format(epoch+1, loss.item()))
 
@@ -45,6 +53,25 @@ if __name__ == "__main__":
     epoch = 10
     data = pd.read_pickle("image_product.pkl")
     image_data = ImageDataset.load_data(data)
+    features_train, features_test, labels_train, labels_test = train_test_split(
+        image_data.features, image_data.labels,
+        test_size=0.3,
+        shuffle=True)
+    features_val, features_test, labels_val, labels_test = train_test_split(
+        features_test, labels_test,
+        test_size=0.4,
+        shuffle=True)
+
+    print(len(features_train), len(labels_train))
+    print(len(features_test), len(labels_test))
+    print(len(features_val), len(labels_val))
+
+
+
+
+
+
+    dddd
     loader = DataLoader(image_data, 5, True)
     model = TL()
     train(model, epoch)
