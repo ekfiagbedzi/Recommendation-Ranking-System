@@ -52,23 +52,12 @@ def train(model, epochs=10):
 if __name__ == "__main__":
     epoch = 10
     data = pd.read_pickle("image_product.pkl")
-    image_data = ImageDataset.load_data(data)
-    features_train, features_test, labels_train, labels_test = train_test_split(
-        image_data.features, image_data.labels,
-        test_size=0.3,
-        shuffle=True)
-    features_val, features_test, labels_val, labels_test = train_test_split(
-        features_test, labels_test,
-        test_size=0.4,
-        shuffle=True)
-
-    print(len(features_train), len(labels_train))
-    print(len(features_test), len(labels_test))
-    print(len(features_val), len(labels_val))
+    train_data, test_data = train_test_split(data, test_size=0.3, shuffle=True)
+    validation_data, test_data = train_test_split(test_data, test_size=0.4, shuffle=True)
 
 
-
-
+    dddd
+    #image_data = ImageDataset.load_data(data)
 
 
     dddd
