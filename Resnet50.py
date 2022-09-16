@@ -1,3 +1,5 @@
+import os
+import time
 from utils.helpers import ImageDataset
 
 import pandas as pd
@@ -20,15 +22,18 @@ class TL(torch.nn.Module):
 def train(model, epochs=10):
 
     writer = SummaryWriter()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
     for epoch in range(epochs):
         for batch in loader:
             features, labels = batch
+            features, labels = features.to(device), labels.to(device)
             predictions = model(features)
             loss = F.cross_entropy(predictions, labels)
             loss.backward()
-            print("Loss = {}".format(loss.item()))
+            #print("Loss = {}".format(loss.item()))
             optimizer.step()
             optimizer.zero_grad()
             writer.add_scalar("Loss", loss.item(), batch_ind)
@@ -37,10 +42,14 @@ def train(model, epochs=10):
 
 
 if __name__ == "__main__":
+    epoch = 10
     data = pd.read_pickle("image_product.pkl")
     image_data = ImageDataset.load_data(data)
     loader = DataLoader(image_data, 5, True)
     model = TL()
-    train(model)
+    train(model, epoch)
 
-    torch.save(model.state_dict(), "model.pt")
+    ts = int(time.time())
+    os.mkdir("model_evaluation/{}/".format(ts))
+    os.mkdir("model_evaluation/{}/weights/".format(ts))
+    torch.save(model.state_dict(), "model_evaluation/{}/weights/{}.pt".format(ts, epoch))
