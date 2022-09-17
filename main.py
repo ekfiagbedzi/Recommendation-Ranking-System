@@ -4,6 +4,8 @@ from utils.helpers import ImageDataset
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -19,7 +21,7 @@ class TL(torch.nn.Module):
         self.resnet50.fc = torch.nn.Linear(2048, 13)
 
     def forward(self, X):
-        return F.softmax(self.resnet50(X))
+        return F.softmax(self.resnet50(X), dim=1)
 
 
 def train(model, epochs=10):
@@ -37,27 +39,39 @@ def train(model, epochs=10):
             predictions = model(features)
             train_loss = F.cross_entropy(predictions, labels)
             train_loss.backward()
+            predictions = torch.argmax(predictions, dim=1)
+            train_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
+            writer.add_scalar("Train Accuracy", train_accuracy, batch_ind)
+
 
             with torch.no_grad():
                 model.eval()                
-                feature, labels = next(iter(validation_loader))
-                features, labels = batch
+                features, labels = next(iter(validation_loader))
                 features, labels = features.to(device), labels.to(device)
                 predictions = model(features)
                 validation_loss = F.cross_entropy(predictions, labels)
-                print("Rev {}: Train Loss = {} Validation Loss = {}".format(
+                predictions = torch.argmax(predictions, dim=1)
+                validation_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+
+                print(
+                    "Batch Round {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
                             batch_ind,
                             train_loss.item(),
-                            validation_loss.item()))
-
+                            train_accuracy,
+                            validation_loss.item(),
+                            validation_accuracy))
+                
                 writer.add_scalar(
                     "Validation Loss", validation_loss.item(), batch_ind)
+                writer.add_scalar(
+                    "Validation Accuracy", validation_accuracy, batch_ind)
+                    
 
             batch_ind += 1            
-        print("Epoch {}: Train Loss = {}, Validation Loss = {}".format(
-                epoch+1, train_loss.item(), validation_loss.item()))
+        print("Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
+                epoch+1, train_loss.item(), train_accuracy, validation_loss.item(), validation_accuracy))
 
 def test(model):
     with torch.no_grad():
@@ -67,11 +81,13 @@ def test(model):
         features, labels = features.to(device), labels.to(device)
         predictions = model(features)
         test_loss = F.cross_entropy(predictions, labels)
-        print("Test Loss = {}".format(test_loss.item()))
+        predictions = torch.argmax(predictions, dim=1)
+        test_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+        print("Test Loss = {} Test Accuracy = {}".format(test_loss.item(), test_accuracy))
 
 
 if __name__ == "__main__":
-    epochs = 10
+    epochs = 30
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_pickle("image_product.pkl")
     train_data, test_data = train_test_split(
@@ -84,12 +100,13 @@ if __name__ == "__main__":
     validation_data = ImageDataset.load_data(validation_data)
 
 
-    train_loader = DataLoader(train_data, 30, True)
+    train_loader = DataLoader(train_data, 32, True)
     test_loader = DataLoader(test_data, len(test_data))
     validation_loader = DataLoader(validation_data, len(validation_data))
 
     model = TL()
     train(model, epochs)
+    test(model)
 
     ts = int(time.time())
     os.mkdir("model_evaluation/{}/".format(ts))
