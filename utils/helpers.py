@@ -128,8 +128,3 @@ class ImageDataset(Dataset):
             labels.append(torch.tensor(cats[ind]))
             ind += 1
         return cls(features, labels)
-
-        # use paths to load images
-        # use paths to get corresponding labels
-        # convert images to tensor
-        # zip tensors and labels

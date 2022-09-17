@@ -3,3 +3,6 @@ mypython
 recommendation
 *.egg-info
 *__pycache*
+runs
+*.pt
+model_evaluation
