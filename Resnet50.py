@@ -12,7 +12,10 @@ from torch.utils.tensorboard import SummaryWriter
 class TL(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
+        self.resnet50 = torch.hub.load(
+            'NVIDIA/DeepLearningExamples:torchhub',
+            'nvidia_resnet50',
+            pretrained=True)
         self.resnet50.fc = torch.nn.Linear(2048, 13)
 
     def forward(self, X):
@@ -52,20 +55,26 @@ def train(model, epochs=10):
 if __name__ == "__main__":
     epoch = 10
     data = pd.read_pickle("image_product.pkl")
-    train_data, test_data = train_test_split(data, test_size=0.3, shuffle=True)
-    validation_data, test_data = train_test_split(test_data, test_size=0.4, shuffle=True)
+    train_data, test_data = train_test_split(
+        data, test_size=0.3, shuffle=True)
+    validation_data, test_data = train_test_split(
+        test_data, test_size=0.4, shuffle=True)
+
+    train_data = ImageDataset.load_data(train_data)
+    test_data = ImageDataset.load_data(test_data)
+    validation_data = ImageDataset.load_data(validation_data)
 
 
-    dddd
-    #image_data = ImageDataset.load_data(data)
-
-
-    dddd
-    loader = DataLoader(image_data, 5, True)
+    train_lodaer = DataLoader(train_data, 30, True)
+    test_loader = DataLoader(test_data, 1, True)
+    validation_loader = DataLoader(validation_data, 1, True)
+    aaaa
     model = TL()
     train(model, epoch)
 
     ts = int(time.time())
     os.mkdir("model_evaluation/{}/".format(ts))
     os.mkdir("model_evaluation/{}/weights/".format(ts))
-    torch.save(model.state_dict(), "model_evaluation/{}/weights/{}.pt".format(ts, epoch))
+    torch.save(
+        model.state_dict(),
+        "model_evaluation/{}/weights/{}.pt".format(ts, epoch))
