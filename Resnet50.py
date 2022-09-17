@@ -30,26 +30,31 @@ def train(model, epochs=10):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
     for epoch in range(epochs):
-        for batch in loader:
+        model.train()
+        for batch in train_loader:
             optimizer.zero_grad()
             features, labels = batch
             features, labels = features.to(device), labels.to(device)
             predictions = model(features)
-            loss = F.cross_entropy(predictions, labels)
-            loss.backward()
-            #print("Loss = {}".format(loss.item()))
+            train_loss = F.cross_entropy(predictions, labels)
+            train_loss.backward()
+            print("Train Loss = {}".format(train_loss.item()))
             optimizer.step()
-            writer.add_scalar("Loss", loss.item(), batch_ind)
+            writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
 
-            with torch.no_grad():
-                for features, labels in loader:
-                    features, labels = features.to(device), labels.to(device)
-                    predictions = model(features)
-                    loss = F.cross_entropy(predictions, labels)
-                    writer.add_scalar("Loss", loss.item(), batch_ind)
+        with torch.no_grad():
+            model.eval()
+            for features, labels in validation_loader:
+                features, labels = features.to(device), labels.to(device)
+                predictions = model(features)
+                validation_loss = F.cross_entropy(predictions, labels)
+                print("Validation Loss = {}".format(validation_loss.item()))
+
+                writer.add_scalar("Validation Loss", validation_loss.item(), batch_ind)
 
             batch_ind += 1            
-        print("Epoch {}: Loss is {}".format(epoch+1, loss.item()))
+        print("Epoch {}: Train Loss = {}, Validation Loss = {}".format(
+                epoch+1, train_loss.item(), validation_loss.item()))
 
 
 if __name__ == "__main__":
@@ -65,10 +70,9 @@ if __name__ == "__main__":
     validation_data = ImageDataset.load_data(validation_data)
 
 
-    train_lodaer = DataLoader(train_data, 30, True)
-    test_loader = DataLoader(test_data, 1, True)
-    validation_loader = DataLoader(validation_data, 1, True)
-    aaaa
+    train_loader = DataLoader(train_data, 30, True)
+    test_loader = DataLoader(test_data)
+    validation_loader = DataLoader(validation_data)
     model = TL()
     train(model, epoch)
 
