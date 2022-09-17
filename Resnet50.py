@@ -50,11 +50,23 @@ def train(model, epochs=10):
                 validation_loss = F.cross_entropy(predictions, labels)
                 print("Validation Loss = {}".format(validation_loss.item()))
 
-                writer.add_scalar("Validation Loss", validation_loss.item(), batch_ind)
+                writer.add_scalar(
+                    "Validation Loss", validation_loss.item(), batch_ind)
 
             batch_ind += 1            
         print("Epoch {}: Train Loss = {}, Validation Loss = {}".format(
                 epoch+1, train_loss.item(), validation_loss.item()))
+
+def test(model):
+    with torch.no_grad():
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+        model.eval()
+        for features, labels in test_loader:
+            features, labels = features.to(device), labels.to(device)
+            predictions = model(features)
+            test_loss = F.cross_entropy(predictions, labels)
+            print("Test Loss = {}".format(test_loss.item()))
 
 
 if __name__ == "__main__":
