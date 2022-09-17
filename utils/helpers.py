@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import pandas as pd
 import cv2
 from PIL import Image
@@ -11,8 +10,6 @@ from sklearn.preprocessing import LabelEncoder
 import torch
 from torch.utils.data import Dataset
 
-
-le = LabelEncoder()
 
 def resize_image(final_size, im):
     """Resize all images to same sizes
@@ -72,7 +69,7 @@ def image_to_array(img_id):
             Array of pixel values
     """
     img = cv2.imread(
-        "/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(img_id)
+        "~/cleaned_images/{}_resized.jpg".format(img_id)
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
@@ -100,6 +97,8 @@ def convert_arrays_to_columns(ser):
 
 
 class ImageDataset(Dataset):
+
+    le = LabelEncoder()
     
     def __init__(self, features=None, labels=None):
         super().__init__()
@@ -119,7 +118,7 @@ class ImageDataset(Dataset):
         labels = []
         ind = 0
         IDs = data.id.tolist()
-        cats = le.fit_transform(
+        cats = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         for ID in IDs:
             img_path = "/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(ID)

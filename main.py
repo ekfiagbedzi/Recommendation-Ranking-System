@@ -110,6 +110,8 @@ if __name__ == "__main__":
         test_data, test_size=0.4, shuffle=True)
 
     train_data = ImageDataset.load_data(train_data)
+    print(train_data.le.inverse_transform(torch.tensor([5])))
+    dddd
     test_data = ImageDataset.load_data(test_data)
     validation_data = ImageDataset.load_data(validation_data)
 
