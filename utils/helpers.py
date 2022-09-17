@@ -69,7 +69,7 @@ def image_to_array(img_id):
             Array of pixel values
     """
     img = cv2.imread(
-        "~/cleaned_images/{}_resized.jpg".format(img_id)
+        "cleaned_images/{}_resized.jpg".format(img_id)
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
@@ -97,8 +97,15 @@ def convert_arrays_to_columns(ser):
 
 
 class ImageDataset(Dataset):
-
-    le = LabelEncoder()
+    """Create a PyTorch Dataset
+        Args:
+              features (*array) - Any array of values
+              labels (*array) - Any array of values
+        
+        Return:
+              (obj) torch.utils.data.Dataset
+    """
+    le = LabelEncoder() # encoder/decoder attribute
     
     def __init__(self, features=None, labels=None):
         super().__init__()
@@ -106,14 +113,23 @@ class ImageDataset(Dataset):
         self.labels = labels
 
     def __getitem__(self, index):
+        """Get example at specified index"""
         return self.features[index], self.labels[index]
 
     def __len__(self):
+        """Get number of examples in dataset"""
         return len(self.features)
 
     
     @classmethod
     def load_data(cls, data):
+        """Alternative PyTorch Dataset constructor
+           Args:
+                data (pandas.DataFrame) - A pandas DataFrame object
+
+           Return:
+              (obj) torch.utils.data.Dataset
+        """
         features = []
         labels = []
         ind = 0
@@ -121,7 +137,7 @@ class ImageDataset(Dataset):
         cats = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         for ID in IDs:
-            img_path = "/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/cleaned_images/{}_resized.jpg".format(ID)
+            img_path = "cleaned_images/{}_resized.jpg".format(ID)
             with Image.open(img_path) as im:
                 features.append(torchvision.transforms.functional.to_tensor(im))
             labels.append(torch.tensor(cats[ind]))
