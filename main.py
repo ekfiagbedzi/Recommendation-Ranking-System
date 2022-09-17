@@ -55,10 +55,12 @@ def train(model, epochs=10):
                 predictions = model(features)
                 validation_loss = F.cross_entropy(predictions, labels)
                 predictions = torch.argmax(predictions, dim=1)
-                validation_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+                validation_accuracy = metrics.accuracy_score(
+                    labels.cpu(), predictions.cpu())
 
                 print(
-                    "Batch Round {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
+                    "Batch Round {}: Train Loss = {} Train Accuracy = {} Valida\
+                        tion Loss = {} Validation Accuracy = {}".format(
                             batch_ind,
                             train_loss.item(),
                             train_accuracy,
@@ -73,8 +75,13 @@ def train(model, epochs=10):
 
             batch_ind += 1            
         print(
-            "Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
-                epoch+1, train_loss.item(), train_accuracy, validation_loss.item(), validation_accuracy))
+            "Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {}\
+                 Validation Accuracy = {}".format(
+                epoch+1,
+                train_loss.item(),
+                train_accuracy,
+                validation_loss.item(),
+                validation_accuracy))
     return {
         "Epoch": epoch,
         "TrainLoss": train_loss.item(),
@@ -110,8 +117,6 @@ if __name__ == "__main__":
         test_data, test_size=0.4, shuffle=True)
 
     train_data = ImageDataset.load_data(train_data)
-    print(train_data.le.inverse_transform(torch.tensor([5])))
-    dddd
     test_data = ImageDataset.load_data(test_data)
     validation_data = ImageDataset.load_data(validation_data)
 
