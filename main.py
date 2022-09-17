@@ -1,5 +1,6 @@
 import os
 import time
+import json
 from utils.helpers import ImageDataset
 
 import pandas as pd
@@ -40,7 +41,8 @@ def train(model, epochs=10):
             train_loss = F.cross_entropy(predictions, labels)
             train_loss.backward()
             predictions = torch.argmax(predictions, dim=1)
-            train_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+            train_accuracy = metrics.accuracy_score(
+                labels.cpu(), predictions.cpu())
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
             writer.add_scalar("Train Accuracy", train_accuracy, batch_ind)
@@ -70,8 +72,15 @@ def train(model, epochs=10):
                     
 
             batch_ind += 1            
-        print("Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
+        print(
+            "Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}".format(
                 epoch+1, train_loss.item(), train_accuracy, validation_loss.item(), validation_accuracy))
+    return {
+        "Epoch": epoch,
+        "TrainLoss": train_loss.item(),
+        "TrainAccuracy": train_accuracy,
+        "ValidationLoss": validation_loss.item(),
+        "ValidationAccuracy": validation_accuracy}
 
 def test(model):
     with torch.no_grad():
@@ -83,11 +92,16 @@ def test(model):
         test_loss = F.cross_entropy(predictions, labels)
         predictions = torch.argmax(predictions, dim=1)
         test_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
-        print("Test Loss = {} Test Accuracy = {}".format(test_loss.item(), test_accuracy))
+        print(
+            "Test Loss = {} Test Accuracy = {}".format(
+                test_loss.item(), test_accuracy))
+    return {
+        "TestLoss": test_loss.item(),
+        "TestAccuracy": test_accuracy}
 
 
 if __name__ == "__main__":
-    epochs = 30
+    epochs = 25
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_pickle("image_product.pkl")
     train_data, test_data = train_test_split(
@@ -105,12 +119,19 @@ if __name__ == "__main__":
     validation_loader = DataLoader(validation_data, len(validation_data))
 
     model = TL()
-    train(model, epochs)
-    test(model)
+    train_metrics = train(model, epochs)
+    test_metrics = test(model)
 
     ts = int(time.time())
     os.mkdir("model_evaluation/{}/".format(ts))
     os.mkdir("model_evaluation/{}/weights/".format(ts))
+    os.mkdir("model_evaluation/{}/metrics/".format(ts))
+
     torch.save(
         model.state_dict(),
         "model_evaluation/{}/weights/{}.pt".format(ts, epochs))
+
+    with open(
+        "model_evaluation/{}/metrics/{}.json".format(ts, epochs), "a+") as f:
+        json.dump(
+            {"train_metrics": train_metrics, "test_metrics": test_metrics}, f)
