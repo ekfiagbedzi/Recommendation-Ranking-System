@@ -25,7 +25,6 @@ class TL(torch.nn.Module):
 def train(model, epochs=10):
 
     writer = SummaryWriter()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
@@ -43,19 +42,18 @@ def train(model, epochs=10):
 
             with torch.no_grad():
                 model.eval()                
-                for batch in validation_loader:
-                    features, labels = batch
-                    features, labels = features.to(device), labels.to(device)
-                    predictions = model(features)
-                    validation_loss = F.cross_entropy(predictions, labels)
-                    print(
-                        "Rev {}: Train Loss = {} Validation Loss = {}".format(
+                feature, labels = next(iter(validation_loader))
+                features, labels = batch
+                features, labels = features.to(device), labels.to(device)
+                predictions = model(features)
+                validation_loss = F.cross_entropy(predictions, labels)
+                print("Rev {}: Train Loss = {} Validation Loss = {}".format(
                             batch_ind,
                             train_loss.item(),
                             validation_loss.item()))
 
-                    writer.add_scalar(
-                        "Validation Loss", validation_loss.item(), batch_ind)
+                writer.add_scalar(
+                    "Validation Loss", validation_loss.item(), batch_ind)
 
             batch_ind += 1            
         print("Epoch {}: Train Loss = {}, Validation Loss = {}".format(
@@ -63,18 +61,18 @@ def train(model, epochs=10):
 
 def test(model):
     with torch.no_grad():
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
         model.eval()
-        for features, labels in test_loader:
-            features, labels = features.to(device), labels.to(device)
-            predictions = model(features)
-            test_loss = F.cross_entropy(predictions, labels)
-            print("Test Loss = {}".format(test_loss.item()))
+        features, labels = next(iter(test_loader))
+        features, labels = features.to(device), labels.to(device)
+        predictions = model(features)
+        test_loss = F.cross_entropy(predictions, labels)
+        print("Test Loss = {}".format(test_loss.item()))
 
 
 if __name__ == "__main__":
-    epoch = 10
+    epochs = 10
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_pickle("image_product.pkl")
     train_data, test_data = train_test_split(
         data, test_size=0.3, shuffle=True)
@@ -89,12 +87,13 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_data, 30, True)
     test_loader = DataLoader(test_data, len(test_data))
     validation_loader = DataLoader(validation_data, len(validation_data))
+
     model = TL()
-    train(model, epoch)
+    train(model, epochs)
 
     ts = int(time.time())
     os.mkdir("model_evaluation/{}/".format(ts))
     os.mkdir("model_evaluation/{}/weights/".format(ts))
     torch.save(
         model.state_dict(),
-        "model_evaluation/{}/weights/{}.pt".format(ts, epoch))
+        "model_evaluation/{}/weights/{}.pt".format(ts, epochs))
