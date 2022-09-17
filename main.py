@@ -38,20 +38,24 @@ def train(model, epochs=10):
             predictions = model(features)
             train_loss = F.cross_entropy(predictions, labels)
             train_loss.backward()
-            print("Train Loss = {}".format(train_loss.item()))
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
 
-        with torch.no_grad():
-            model.eval()
-            for features, labels in validation_loader:
-                features, labels = features.to(device), labels.to(device)
-                predictions = model(features)
-                validation_loss = F.cross_entropy(predictions, labels)
-                print("Validation Loss = {}".format(validation_loss.item()))
+            with torch.no_grad():
+                model.eval()                
+                for batch in validation_loader:
+                    features, labels = batch
+                    features, labels = features.to(device), labels.to(device)
+                    predictions = model(features)
+                    validation_loss = F.cross_entropy(predictions, labels)
+                    print(
+                        "Rev {}: Train Loss = {} Validation Loss = {}".format(
+                            batch_ind,
+                            train_loss.item(),
+                            validation_loss.item()))
 
-                writer.add_scalar(
-                    "Validation Loss", validation_loss.item(), batch_ind)
+                    writer.add_scalar(
+                        "Validation Loss", validation_loss.item(), batch_ind)
 
             batch_ind += 1            
         print("Epoch {}: Train Loss = {}, Validation Loss = {}".format(
@@ -83,8 +87,8 @@ if __name__ == "__main__":
 
 
     train_loader = DataLoader(train_data, 30, True)
-    test_loader = DataLoader(test_data)
-    validation_loader = DataLoader(validation_data)
+    test_loader = DataLoader(test_data, len(test_data))
+    validation_loader = DataLoader(validation_data, len(validation_data))
     model = TL()
     train(model, epoch)
 
