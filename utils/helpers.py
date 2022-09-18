@@ -69,7 +69,7 @@ def image_to_array(img_id):
             Array of pixel values
     """
     img = cv2.imread(
-        "cleaned_images/{}_resized.jpg".format(img_id)
+        "data/cleaned_images/{}_resized.jpg".format(img_id)
 )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
@@ -137,7 +137,7 @@ class ImageDataset(Dataset):
         cats = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         for ID in IDs:
-            img_path = "cleaned_images/{}_resized.jpg".format(ID)
+            img_path = "data/cleaned_images/{}_resized.jpg".format(ID)
             with Image.open(img_path) as im:
                 features.append(torchvision.transforms.functional.to_tensor(im))
             labels.append(torch.tensor(cats[ind]))
