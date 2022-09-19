@@ -10,6 +10,7 @@ from sklearn import metrics
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 class TL(torch.nn.Module):
@@ -20,8 +21,21 @@ class TL(torch.nn.Module):
             'nvidia_resnet50',
             pretrained=True)
         self.resnet50.fc = torch.nn.Linear(2048, 13)
+        self.fc1 = torch.nn.Linear(1024, 512)
+        self.fc2 = torch.nn.Linear(512, 256)
+        self.fc3 = torch.nn.Linear(256, 128)
+        self.final = torch.nn .Linear(128, 13)
+        self.dropout = torch.nn.Dropout(0.3)
 
     def forward(self, X):
+        #x = F.relu(self.resnet50(X))
+        #x = self.dropout(x)
+        #x = F.relu(self.fc1(x))
+        #x = self.dropout(x)
+        #x = F.relu(self.fc2(x))
+        #x = self.dropout(x)
+        #x = F.relu(self.fc3(x))
+        #x = self.dropout(x)
         return F.softmax(self.resnet50(X), dim=1)
 
 
@@ -59,8 +73,8 @@ def train(model, epochs=10):
                     labels.cpu(), predictions.cpu())
 
                 print(
-                    "Batch Round {}: Train Loss = {} Train Accuracy = {} Valida\
-                        tion Loss = {} Validation Accuracy = {}".format(
+                    "Batch Round {}: Train Loss = {} Train Accuracy = {} \
+                        Validation Loss = {} Validation Accuracy = {}".format(
                             batch_ind,
                             train_loss.item(),
                             train_accuracy,
@@ -76,7 +90,7 @@ def train(model, epochs=10):
             batch_ind += 1            
         print(
             "Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {}\
-                 Validation Accuracy = {}".format(
+                 \nValidation Accuracy = {}".format(
                 epoch+1,
                 train_loss.item(),
                 train_accuracy,
@@ -108,9 +122,19 @@ def test(model):
 
 
 if __name__ == "__main__":
-    epochs = 25
+    batch_size = 128
+    epochs = 1000
+    transformers_list = [transforms.Resize(size=256),
+            transforms.CenterCrop(size=224),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomResizedCrop(size=224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])]
+    transformers = transforms.Compose(transformers_list)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data = pd.read_pickle("image_product.pkl")
+    data = pd.read_pickle("data/tables/image_product.pkl")
     train_data, test_data = train_test_split(
         data, test_size=0.3, shuffle=True)
     validation_data, test_data = train_test_split(
@@ -121,12 +145,14 @@ if __name__ == "__main__":
     validation_data = ImageDataset.load_data(validation_data)
 
 
-    train_loader = DataLoader(train_data, 32, True)
+    train_loader = DataLoader(train_data, batch_size, True)
     test_loader = DataLoader(test_data, len(test_data))
     validation_loader = DataLoader(validation_data, len(validation_data))
 
     model = TL()
+    start_time = time.time()
     train_metrics = train(model, epochs)
+    end_time = time.time()
     test_metrics = test(model)
 
     ts = int(time.time())
@@ -141,4 +167,8 @@ if __name__ == "__main__":
     with open(
         "model_evaluation/{}/metrics/{}.json".format(ts, epochs), "a+") as f:
         json.dump(
-            {"train_metrics": train_metrics, "test_metrics": test_metrics}, f)
+            {"TrainingTime": (end_time-start_time)/60,
+            "BatchSize": batch_size,
+            "Epochs": epochs,
+            "train_metrics": train_metrics,
+            "test_metrics": test_metrics}, f)
