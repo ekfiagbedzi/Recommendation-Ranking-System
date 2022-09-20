@@ -25,9 +25,24 @@ which is very high and can be imporved by feature engineering such as removing s
 ### Creation of baseline classification model
 I created an image classification model to predict the class of a product based on its associated image
 I first converted each image into numpy arrays and stored them in a pandas DataFrame
-Then, I flattened each array and into 1D arrays and converted these arrays into pandas DataFrame columns using `FunctionTransforemer`
+Then, I flattened each array and into 1D arrays and converted these arrays into pandas DataFrame columns using `FunctionTransformer`
 I then combined these transformer steps with a `RandomForest` classifier into a pipeline and trained this pipe using my training data
 I then predicted on the out of sample test data and obtained an accuracy of 20% which is very low.
 However, a better model can be made using deep neural networks
 
+
+### Training a model on images using CNN in Pytorch
+#### Creating a Pytorch Dataset and DataLoader
+I created a Pytorch Dataset class which inherits from the torch.utils.data.DataSet module of Pytorch
+I then used this class to create a pytorch Dataset for each of my images where they also have their labels attached
+Next, I used Pytorch DataLoader, to load my data in batches for feeding into the pytorch model I created
+
+#### Define Network Architecture
+I did transfer learning, where I used the pre-trained model ResNet50 from torchvision. I initialized this model architecture with already existing weights and added a final fully connected layer with input nodes 2081 and output nodes 13 representing 13 classes I am trying to predict. 
+
+#### Define training method
+I defined a function which takes in a model and number of epochs. In this funciton, I defined a for lood that loops through the batched data and passes them through my model, make predictions and calulcate the `loss` of the predictions using `cross-entropy loss`, Performs backpropagation, and uses the `SGD optimizer` to update the weights of the network. The accuracy of the model is also calculated. These metrics were visualised using tensorboard as shown below
+
+#### Metrics of the model
+After 160 epochs of batch size 128, I had a training accuracy of ~60, validation and testing accuracy of ~25
 
