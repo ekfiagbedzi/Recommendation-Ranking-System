@@ -122,21 +122,14 @@ def test(model):
 
 
 if __name__ == "__main__":
+    torch.cuda.empty_cache()
     batch_size = 128
-    epochs = 1000
-    transformers_list = [transforms.Resize(size=256),
-            transforms.CenterCrop(size=224),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.RandomResizedCrop(size=224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])]
-    transformers = transforms.Compose(transformers_list)
+    epochs = 160
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_pickle("data/tables/image_product.pkl")
     train_data, test_data = train_test_split(
-        data, test_size=0.3, shuffle=True)
+        data, test_size=0.3, shuffle=True, random_state=1)
     validation_data, test_data = train_test_split(
         test_data, test_size=0.4, shuffle=True)
 

@@ -1,1 +1,0 @@
-{"train_metrics": {"Epoch": 24, "TrainLoss": 2.329030990600586, "TrainAccuracy": 0.35714285714285715, "ValidationLoss": 2.4083900451660156, "ValidationAccuracy": 0.2766383191595798}, "test_metrics": {"TestLoss": 2.4162089824676514, "TestAccuracy": 0.27081770442610653}}
