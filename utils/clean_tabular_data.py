@@ -70,11 +70,11 @@ combined = combined.iloc[:, [2, 7, 8, 9, 10, 11, 14, 15]]
 
 # convert price dtype to float
 combined.price = combined.loc[
-    :, "price"].str.replace("£", "").str.replace(",", "").astype(float)
+    :, "price"].copy().str.replace("£", "").str.replace(",", "").astype(float)
 
 
 # convert create_time dtype to float
-combined.create_time = pd.to_datetime(combined.create_time)
+combined.create_time = pd.to_datetime(combined.create_time.copy())
 
 
 # save data as a pickle file
