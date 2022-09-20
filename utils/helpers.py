@@ -4,10 +4,10 @@ import pandas as pd
 import cv2
 from PIL import Image
 import fnmatch
-import torchvision
 from sklearn.preprocessing import LabelEncoder
 
 import torch
+import torchvision
 from torch.utils.data import Dataset
 
 
@@ -94,6 +94,25 @@ def convert_arrays_to_columns(ser):
             pandas DataFrame with n columns
     """
     return pd.DataFrame(ser.values.tolist())
+
+
+def image_processor(img_path, transformers=None):
+    """Process images to feed into Pytorch model
+       Args:
+            img_path: (str) - Path/Buffer to image
+            transformers: (torchvision.transforms.Compose Object) - List of
+            transformers compiled into a torchvision.transforms.Compose object
+            
+       Returns:
+            torch.tensor with shape (1, n_channels, width, height)
+    """
+    
+    with Image.open(img_path) as im:
+        if transformers:
+            im = transformers(im)
+        else:
+            im = torchvision.transforms.functional.to_tensor(im)
+    return im.unsqueeze(dim=0)
 
 
 class ImageDataset(Dataset):
