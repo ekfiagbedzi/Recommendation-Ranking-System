@@ -28,11 +28,6 @@ class NN(torch.nn.Module):
             torch.nn.Softmax(1)
         )
 
-
-    def forward(self, X):
-        return self.layers(X)
-
-
 def train(model, epochs=10):
 
     writer = SummaryWriter()
@@ -67,8 +62,8 @@ def train(model, epochs=10):
                     labels.cpu(), predictions.cpu())
 
                 print(
-                    "Batch Round {}: Train Loss = {} Train Acc = {} Val Loss = \
-                        {} Val Acc = {}".format(
+                    "Batch Round {}: Train Loss = {} Train Accuracy = {} \
+                        Validation Loss = {} Validation Accuracy = {}".format(
                             batch_ind,
                             train_loss.item(),
                             train_accuracy,
@@ -83,8 +78,8 @@ def train(model, epochs=10):
 
             batch_ind += 1            
         print(
-            "Epoch {}: Train Loss = {} Train Acc = {} Val Loss = {} Val Acc = \
-                {}".format(
+            "Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {}\
+                 \nValidation Accuracy = {}".format(
                 epoch+1,
                 train_loss.item(),
                 train_accuracy,
@@ -116,11 +111,14 @@ def test(model):
 
 
 if __name__ == "__main__":
-    epochs = 25
+    torch.cuda.empty_cache()
+    batch_size = 128
+    epochs = 160
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data = pd.read_pickle("image_product.pkl")
+    data = pd.read_pickle("data/tables/image_product.pkl")
     train_data, test_data = train_test_split(
-        data, test_size=0.3, shuffle=True)
+        data, test_size=0.3, shuffle=True, random_state=1)
     validation_data, test_data = train_test_split(
         test_data, test_size=0.4, shuffle=True)
 
@@ -129,24 +127,37 @@ if __name__ == "__main__":
     validation_data = ImageDataset.load_data(validation_data)
 
 
-    train_loader = DataLoader(train_data, 32, True)
+    train_loader = DataLoader(train_data, batch_size, True)
     test_loader = DataLoader(test_data, len(test_data))
     validation_loader = DataLoader(validation_data, len(validation_data))
 
     model = NN()
+    start_time = time.time()
     train_metrics = train(model, epochs)
+    end_time = time.time()
     test_metrics = test(model)
+
 
     ts = int(time.time())
     os.mkdir("model_evaluation/{}/".format(ts))
     os.mkdir("model_evaluation/{}/weights/".format(ts))
     os.mkdir("model_evaluation/{}/metrics/".format(ts))
-
+    
+    # save model parameters
     torch.save(
         model.state_dict(),
         "model_evaluation/{}/weights/{}.pt".format(ts, epochs))
+    
+    # save label decoder
+    with open("image_decoder.json", "a+") as f:
+        json.dump(dict(enumerate(train_data.le.classes_)))
 
+    # save model metrics
     with open(
         "model_evaluation/{}/metrics/{}.json".format(ts, epochs), "a+") as f:
         json.dump(
-            {"train_metrics": train_metrics, "test_metrics": test_metrics}, f)
+            {"TrainingTime": (end_time-start_time)/60,
+            "BatchSize": batch_size,
+            "Epochs": epochs,
+            "train_metrics": train_metrics,
+            "test_metrics": test_metrics}, f)
