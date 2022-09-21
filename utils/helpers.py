@@ -158,7 +158,10 @@ class ImageDataset(Dataset):
         for ID in IDs:
             img_path = "data/cleaned_images/{}_resized.jpg".format(ID)
             with Image.open(img_path) as im:
-                features.append(torchvision.transforms.functional.to_tensor(im))
+                if transformers:
+                    features.append(transformers(im))
+                else:
+                    features.append(torchvision.transforms.functional.to_tensor(im))
             labels.append(torch.tensor(cats[ind]))
             ind += 1
         return cls(features, labels)
