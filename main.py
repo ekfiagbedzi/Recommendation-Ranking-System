@@ -72,7 +72,7 @@ if __name__ == "__main__":
     data = pd.read_pickle("data/tables/image_product.pkl")
    
 
-    train_data = ImageDataset.load_data(data)
+    train_data = ImageDataset(data)
     train_loader = DataLoader(train_data, batch_size, True)
 
     model = TL()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     
     # save label decoder
     with open("image_decoder.json", "a+") as f:
-        json.dump(dict(enumerate(train_data.le.classes_)), f)
+        json.dump(train_data.decoder, f)
 
     # save model metrics
     with open(

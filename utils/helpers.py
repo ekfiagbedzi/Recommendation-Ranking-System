@@ -118,37 +118,17 @@ def image_processor(img_path, transformers=None):
 class ImageDataset(Dataset):
     """Create a PyTorch Dataset
         Args:
-              features (*array) - Any array of values
-              labels (*array) - Any array of values
+              data: (pandas.DataFrame) - A pandas DataFrame
+              transformers: (torchvision.transforms.Compose) - A list of
+              torchvision transformers compiled in a compose object
         
         Return:
               (obj) torch.utils.data.Dataset
     """
     le = LabelEncoder() # encoder/decoder attribute
     
-    def __init__(self, features=None, labels=None):
+    def __init__(self, data, transformers=None):
         super().__init__()
-        self.features = features
-        self.labels = labels
-
-    def __getitem__(self, index):
-        """Get example at specified index"""
-        return self.features[index], self.labels[index]
-
-    def __len__(self):
-        """Get number of examples in dataset"""
-        return len(self.features)
-
-    
-    @classmethod
-    def load_data(cls, data, transformers=None):
-        """Alternative PyTorch Dataset constructor
-           Args:
-                data (pandas.DataFrame) - A pandas DataFrame object
-
-           Return:
-              (obj) torch.utils.data.Dataset
-        """
         features = []
         labels = []
         ind = 0
@@ -161,7 +141,21 @@ class ImageDataset(Dataset):
                 if transformers:
                     features.append(transformers(im))
                 else:
-                    features.append(torchvision.transforms.functional.to_tensor(im))
+                    features.append(
+                        torchvision.transforms.functional.to_tensor(im))
             labels.append(torch.tensor(cats[ind]))
             ind += 1
-        return cls(features, labels)
+        self.features = features
+        self.labels = labels
+        self.encoder = dict(
+            zip(self.le.classes_, self.le.inverse_transform(self.le.classes_)))
+        self.decoder = dict(enumerate(self.le.classes_))
+
+
+    def __getitem__(self, index):
+        """Get example at specified index"""
+        return self.features[index], self.labels[index]
+
+    def __len__(self):
+        """Get number of examples in dataset"""
+        return len(self.features)
