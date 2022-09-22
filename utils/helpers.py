@@ -50,7 +50,7 @@ def clean_image_data(path, final_size, save_path):
     print("Images Cleaned Succesfully. Have a Nice Day!!!")
 
 
-def get_element(list, position):
+def get_element(list: list=None, position: int=0):
     """Get a member from a pandas series of lists by position
        Args:
             list: (python list) A python list
@@ -96,7 +96,7 @@ def convert_arrays_to_columns(ser):
     return pd.DataFrame(ser.values.tolist())
 
 
-def image_processor(img_path, transformers=None):
+def image_processor(img_path: str=None, transformers: object=None):
     """Process images to feed into Pytorch model
        Args:
             img_path: (str) - Path/Buffer to image
@@ -119,15 +119,15 @@ class ImageDataset(Dataset):
     """Create a PyTorch Dataset
         Args:
               data: (pandas.DataFrame) - A pandas DataFrame
-              transformers: (torchvision.transforms.Compose) - A list of
-              torchvision transformers compiled in a compose object
+              transformers: (torchvision.transforms.Compose Object) - List of
+            transformers compiled into a torchvision.transforms.Compose object
         
         Return:
               (obj) torch.utils.data.Dataset
     """
     le = LabelEncoder() # encoder/decoder attribute
     
-    def __init__(self, data, transformers=None):
+    def __init__(self, data, transformers: object=None):
         super().__init__()
         features = []
         labels = []
