@@ -1,10 +1,10 @@
 import os
 import time
 import json
+import tqdm
 from utils.helpers import ImageDataset
 
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
 import torch
@@ -33,6 +33,7 @@ def train(model, epochs=10):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
     for epoch in range(epochs):
+        pbar = tqdm(enumerate(train_loader), total=len(train_loader))
         model.train()
         for batch in train_loader:
             optimizer.zero_grad()
