@@ -176,7 +176,6 @@ class TextDataSet(Dataset):
         self.num_classes = len(set(self.labels))
         self.encoder = dict(
             zip(self.le.classes_, self.le.transform(self.le.classes_)))
-        print(self.encoder)
         self.decoder = dict(enumerate(self.le.classes_))
 
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -199,5 +198,3 @@ class TextDataSet(Dataset):
 
     def __len__(self):
         return len(self.labels)
-
-
