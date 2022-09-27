@@ -1,46 +1,51 @@
-from sklearn.metrics import max_error
+from utils.helpers import TextDataSet
+
 import torch
-from transformers import BertTokenizer
-from transformers import BertModel
+from torch import nn
+from torch.utils.data import DataLoader
+import torch.nn.functional as F
+class TextClassifier(nn.Module):
+    def __init__(self, input_size: int = 768):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(192, 128),
+            nn.ReLU(),
+            nn.Linear(128, 13))
 
+    def forward(self, X):
+        return F.softmax(self.layers(X), dim=1)
 
-model = BertModel.from_pretrained(
-    "bert-base-uncased", output_hidden_states=True)
-tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+def train(model, epochs=20):
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    for epoch in range(epochs):
+        model.train()
+        for features, labels in dataloader:
+            optimizer.zero_grad()
+            features, labels = features.to(device), labels.to(device)
+            predictions = model(features)
+            loss = F.cross_entropy(predictions, labels)
+            print(loss)
+            loss.backward()
+            optimizer.step()
+            print(loss)
 
-example_text = "If it quacks like a duck, it is probably a duck."
-bert_input = tokenizer(
-    example_text, padding="max_length", max_length=20,
-    truncation=True, return_tensors="pt")
+if __name__ == "__main__":
+    dataset = TextDataSet()
+    dataloader = DataLoader(dataset, batch_size=24)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = TextClassifier()
+    train(model, epochs=2)
 
-print(bert_input["input_ids"])
-
-print(bert_input["token_type_ids"])
-
-example_text = tokenizer.decode(bert_input.input_ids[0])
-print(example_text)
-
-
-model.eval()
-sentences = [ 
-              ['Never say that a duck cannot quack'],
-              ['Gonna quack like a duck'],
-              ["Give me your best quack"],
-              ["You quack like a nice duck"],
-              ["Up there, you quack like a duck"],
-              ["Never try to quack like a duck"],
-              ["Gonna make you quack like a duck"],
-              ["Let me quack like a duck"],
-              ["You got me quacking like a duck"],
-              ["Down to quack city, where the quack is green and the ducks are pretty"],
-            ]
-
-for sentence in sentences:
-    encoded = tokenizer.batch_encode_plus(sentence, max_length=15, padding="max_length", truncation=True)
-    print(encoded)
-    encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
-    print(encoded)
-    with torch.no_grad():
-        outputs = model(**encoded)
-        print(outputs.last_hidden_state.size())
-print(outputs.last_hidden_state)
