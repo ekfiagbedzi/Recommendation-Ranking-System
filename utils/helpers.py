@@ -9,6 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 import torch
 import torchvision
 from torch.utils.data import Dataset
+from transformers import BertTokenizer, BertModel
 
 
 def resize_image(final_size, im):
@@ -148,7 +149,7 @@ class ImageDataset(Dataset):
         self.features = features
         self.labels = labels
         self.encoder = dict(
-            zip(self.le.classes_, self.le.inverse_transform(self.le.classes_)))
+            zip(self.le.inverse_transform(self.le.transform(self.le.classes_)), self.le.classes_))
         self.decoder = dict(enumerate(self.le.classes_))
 
 
@@ -159,3 +160,44 @@ class ImageDataset(Dataset):
     def __len__(self):
         """Get number of examples in dataset"""
         return len(self.features)
+
+
+class TextDataSet(Dataset):
+    le = LabelEncoder()
+    def __init__(self, position: int=0, data: str="/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl", max_length: int=50):
+        self.data = data
+        if not os.path.exists(self.data):
+            raise FileNotFoundError(f"The file {self.data} does not exist")
+        data = pd.read_pickle(self.data)
+        cats = self.le.fit_transform(
+        data.category.str.split("/").apply(get_element, position))
+        self.labels = torch.tensor(cats)
+        self.descriptions = data.product_description.to_list()
+        self.num_classes = len(set(self.labels))
+        self.encoder = dict(
+            zip(self.le.classes_, self.le.transform(self.le.classes_)))
+        print(self.encoder)
+        self.decoder = dict(enumerate(self.le.classes_))
+
+        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
+        self.model.eval()
+        self.max_length = max_length
+
+    def __getitem__(self, index):
+        label = self.labels[index]
+        sentence = self.descriptions[index]
+        encoded = self.tokenizer.batch_encode_plus([sentence], max_length=self.max_length, padding="max_length", truncation=True)
+        encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        with torch.no_grad():
+            description = self.model(**encoded).last_hidden_state.swapaxes(1, 2)
+
+        description = description.squeeze(0)
+
+        return description, label
+
+
+    def __len__(self):
+        return len(self.labels)
+
+
