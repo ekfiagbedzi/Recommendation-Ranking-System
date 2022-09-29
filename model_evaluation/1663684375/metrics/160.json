@@ -1,1 +1,0 @@
-{"TrainingTime": 45.435166660944624, "BatchSize": 128, "Epochs": 160, "train_metrics": {"Epoch": 159, "TrainLoss": 1.9913867712020874, "TrainAccuracy": 0.6956521739130435, "ValidationLoss": 2.4408578872680664, "ValidationAccuracy": 0.2381190595297649}, "test_metrics": {"TestLoss": 2.460399866104126, "TestAccuracy": 0.21680420105026257}}
