@@ -33,9 +33,8 @@ def train(model, epochs=10):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
     for epoch in range(epochs):
-        pbar = tqdm(enumerate(train_loader), total=len(train_loader))
-        model.train()
-        for batch in train_loader:
+        pbar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
+        for _, batch in pbar:
             optimizer.zero_grad()
             features, labels = batch
             features, labels = features.to(device), labels.to(device)
@@ -48,15 +47,11 @@ def train(model, epochs=10):
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
             writer.add_scalar("Train Accuracy", train_accuracy, batch_ind)
-
-
-
-            print(
-                "Batch Round {}: Train Loss = {} Train Accuracy = {}" \
-                   .format(batch_ind, train_loss.item(), train_accuracy))
                     
 
             batch_ind += 1            
+            pbar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
+                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2)))
 
     return {
         "Epoch": epoch,
@@ -67,7 +62,7 @@ def train(model, epochs=10):
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     batch_size = 32
-    epochs = 30
+    epochs = 20
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_pickle("data/tables/image_product.pkl")
