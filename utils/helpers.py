@@ -116,6 +116,29 @@ def image_processor(img_path: str=None, transformers: object=None):
     return im.unsqueeze(dim=0)
 
 
+def text_processor(sentence: str=None, model=None, tokenizer=None, max_length: int=None, truncation: bool=True):
+    """Process text to feed Pytorch model
+       Args:
+            sentence: (str) - Text to process
+            model: (BertModel) - Model to apply processing
+            tokenizer: (BertTokenizer) - Tokenizer object to convert text into embeddings
+            max_length: (int) - Maximum lenght of each sentence based on padding and truncation
+            padding: (int) - Maximum level to pad to
+            truncation: (bool) - If True, Shorten embedding to max_length
+            
+       Return:
+            Embeddings as 3D torch Tensor of batch_size=1
+    
+    """
+    encoded = tokenizer.batch_encode_plus([sentence], max_length=max_length, padding="max_length", truncation=truncation)
+    encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+    with torch.no_grad():
+        description = model(**encoded).last_hidden_state.swapaxes(1, 2)
+
+    return description
+    
+
+
 class ImageDataset(Dataset):
     """Create a PyTorch Dataset
         Args:
@@ -126,6 +149,7 @@ class ImageDataset(Dataset):
         Return:
               (obj) torch.utils.data.Dataset
     """
+    
     le = LabelEncoder() # encoder/decoder attribute
     
     def __init__(self, data, transformers: object=None):
@@ -198,3 +222,8 @@ class TextDataSet(Dataset):
 
     def __len__(self):
         return len(self.labels)
+
+
+if __name__ == "__main__":
+    a = text_processor("He is a goat", model=BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True), tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"), max_length=50)
+    print(a.shape)
