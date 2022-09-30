@@ -222,8 +222,3 @@ class TextDataSet(Dataset):
 
     def __len__(self):
         return len(self.labels)
-
-
-if __name__ == "__main__":
-    a = text_processor("He is a goat", model=BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True), tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"), max_length=50)
-    print(a.shape)
