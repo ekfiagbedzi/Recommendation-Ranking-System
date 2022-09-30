@@ -33,10 +33,9 @@ def train(model, epochs=10):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
     for epoch in range(epochs):
-        pbar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
-        for _, batch in pbar:
+        progress_bar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
+        for _, (features, labels) in progress_bar:
             optimizer.zero_grad()
-            features, labels = batch
             features, labels = features.to(device), labels.to(device)
             predictions = model(features)
             train_loss = F.cross_entropy(predictions, labels)
@@ -50,7 +49,7 @@ def train(model, epochs=10):
                     
 
             batch_ind += 1            
-            pbar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
+            progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
                    .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2)))
 
     return {
