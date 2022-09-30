@@ -46,3 +46,21 @@ I defined a function which takes in a model and number of epochs. In this funcit
 #### Metrics of the model
 After 160 epochs of batch size 128, I had a training accuracy of ~60, validation and testing accuracy of ~25
 
+
+### Training a model on text using CNN in Pytorch
+#### Creating a Pytorch Dataset and DataLoader using BertModel and BertTokenizer
+I created a Pytorch Dataset class which inherits from the torch.utils.data.DataSet module of Pytorch
+In creating this dataset class used `BertTokenizer` to obtain tokens from description of each item, and used `BertModel` to convert these tokens into embeddings
+I then used this class to create a pytorch Dataset for each of my descriptions where they also have their labels attached
+Next, I used Pytorch DataLoader, to load my data in batches for feeding into the pytorch model I created
+
+#### Define Network Architecture
+I created a custom model architecture which had four 1D convolutional layers with a kernel size of 3, stride 1 and padding 1.
+After each convolutional layer was a ReLU activation funciton and a MaxPooling layer having a kernel size of 2 and stride of 2
+
+#### Define training method
+I defined a function which takes in a model and number of epochs. In this funciton, I defined a for lood that loops through the batched data and passes them through my model, make predictions and calulcate the `loss` of the predictions using `cross-entropy loss`, Performs backpropagation, and uses the `Adam optimizer` to update the weights of the network. The accuracy of the model is also calculated. These metrics were visualised using tensorboard as shown below
+
+#### Metrics of the model
+After 20 epochs of batch size 32, I had a training accuracy of ~10%
+
