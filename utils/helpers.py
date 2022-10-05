@@ -222,3 +222,43 @@ class TextDataSet(Dataset):
 
     def __len__(self):
         return len(self.labels)
+
+
+class CombinedDataset(Dataset):
+    def __init__(self, transformers: object=None, position: int=0, data: str="", max_length: int=50):
+        super().__init__()
+        self.transformers = transformers
+        self.position = position
+        self.max_length = max_length
+        self.data = data
+        if not os.path.exists(self.data):
+            raise FileNotFoundError(f"The file {self.data} does not exist")
+        data = pd.read_pickle(self.data)
+        features = []
+        labels = []
+        ind = 0
+        IDs = data.id.tolist()
+        cats = ImageDataset.le.fit_transform(
+        data.category.str.split("/").apply(get_element, position=0))
+        for ID in IDs:
+            img_path = "data/cleaned_images/{}_resized.jpg".format(ID)
+            with Image.open(img_path) as im:
+                if transformers:
+                    features.append(transformers(im))
+                else:
+                    features.append(
+                        torchvision.transforms.functional.to_tensor(im))
+            labels.append(torch.tensor(cats[ind]))
+            ind += 1
+        self.features = features
+        self.labels = labels
+        self.descriptions = data.product_description.to_list()
+        self.num_classes = len(set(self.labels))
+        self.encoder = dict(
+            zip(self.le.inverse_transform(self.le.transform(self.le.classes_)), self.le.classes_))
+        self.decoder = dict(enumerate(self.le.classes_))
+        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
+        self.model.eval()
+        self.max_length = max_length
+    
