@@ -225,7 +225,8 @@ class TextDataSet(Dataset):
 
 
 class CombinedDataset(Dataset):
-    def __init__(self, transformers: object=None, position: int=0, data: str="", max_length: int=50):
+    le = LabelEncoder()
+    def __init__(self, transformers: object=None, position: int=0, data: str="/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl", max_length: int=50):
         super().__init__()
         self.transformers = transformers
         self.position = position
@@ -262,3 +263,5 @@ class CombinedDataset(Dataset):
         self.model.eval()
         self.max_length = max_length
     
+if __name__ == "__main__":
+    CombinedDataset()
