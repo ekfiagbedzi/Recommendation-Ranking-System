@@ -140,25 +140,36 @@ def text_processor(sentence: str=None, model=None, tokenizer=None, max_length: i
 
 
 class ImageDataset(Dataset):
-    """Create a PyTorch Dataset
-        Args:
-              data: (pandas.DataFrame) - A pandas DataFrame
+    """The ImageDataset object inherits from torch.utils.data.Dataset. It
+       creates an image dataset containing each image and its corresponding label,
+       and transforms them so that they can be fed into PyTorch models
+       Parameters:
+              path: (str) - Location of pandas dataframe
               transformers: (torchvision.transforms.Compose Object) - List of
-            transformers compiled into a torchvision.transforms.Compose object
+                        transformers compiled into a
+                        torchvision.transforms.Compose object
         
-        Return:
-              (obj) torch.utils.data.Dataset
+       Attributes:
+              features: (torch.Tensor) - Tensor containing transformed image
+                        data to train the model
+              labels: (torch.Tensor) - Tensor containing target values to be
+                        predicted from images
+              encoder: (dict) - Convert str target variables into int
+              decoder: (dict) - Convert int target variables into str
+
+              
     """
     
     le = LabelEncoder() # encoder/decoder attribute
     
-    def __init__(self, data, transformers: object=None):
+    def __init__(self, path: str=None, transformers: object=None):
         super().__init__()
         features = []
         labels = []
         ind = 0
+        data = pd.read_pickle(path)
         IDs = data.id.tolist()
-        cats = ImageDataset.le.fit_transform(
+        categories = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         for ID in IDs:
             img_path = "data/cleaned_images/{}_resized.jpg".format(ID)
@@ -168,7 +179,7 @@ class ImageDataset(Dataset):
                 else:
                     features.append(
                         torchvision.transforms.functional.to_tensor(im))
-            labels.append(torch.tensor(cats[ind]))
+            labels.append(torch.tensor(categories[ind]))
             ind += 1
         self.features = features
         self.labels = labels
@@ -255,13 +266,14 @@ class CombinedDataset(Dataset):
         self.labels = labels
         self.descriptions = data.product_description.to_list()
         self.num_classes = len(set(self.labels))
-        self.encoder = dict(
-            zip(self.le.inverse_transform(self.le.transform(self.le.classes_)), self.le.classes_))
-        self.decoder = dict(enumerate(self.le.classes_))
+        #self.encoder = dict(
+        #    zip(self.le.inverse_transform(self.le.transform(self.le.classes_)), self.le.classes_))
+        #self.decoder = dict(enumerate(self.le.classes_))
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
         self.model.eval()
         self.max_length = max_length
     
 if __name__ == "__main__":
-    CombinedDataset()
+    td = ImageDataset("/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl")
+    print(len(td))
