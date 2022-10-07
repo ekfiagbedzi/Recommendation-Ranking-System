@@ -164,10 +164,13 @@ class ImageDataset(Dataset):
     
     def __init__(self, path: str=None, transformers: object=None):
         super().__init__()
+        self.path = path
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f"The file {self.path} does not exist")
         features = []
         labels = []
         ind = 0
-        data = pd.read_pickle(path)
+        data = pd.read_pickle(self.path)
         IDs = data.id.tolist()
         categories = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
@@ -197,16 +200,35 @@ class ImageDataset(Dataset):
         return len(self.features)
 
 
-class TextDataSet(Dataset):
+class TextDataset(Dataset):
+    """The TextDataset object inherits from torch.utils.data.Dataset. It
+       creates an text dataset containing each text and its corresponding label,
+       and transforms them into tokens and embeddings, so that they can be fed 
+       into PyTorch models
+       Parameters:
+              path: (str) - Location of pandas dataframe, default = None
+              max_length (int) - Maximum length of sentence allowed, default = 50
+        
+       Attributes:
+              features: (torch.Tensor) - Tensor containing transformed image
+                        data to train the model
+              labels: (torch.Tensor) - Tensor containing target values to be
+                        predicted from images
+              encoder: (dict) - Convert str target variables into int
+              decoder: (dict) - Convert int target variables into str
+
+              
+    """
     le = LabelEncoder()
-    def __init__(self, position: int=0, data: str="/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl", max_length: int=50):
-        self.data = data
-        if not os.path.exists(self.data):
-            raise FileNotFoundError(f"The file {self.data} does not exist")
-        data = pd.read_pickle(self.data)
-        cats = self.le.fit_transform(
-        data.category.str.split("/").apply(get_element, position))
-        self.labels = torch.tensor(cats)
+    def __init__(self, path: str=None, max_length: int=50):
+        super().__init__()
+        self.path = path
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f"The file {self.path} does not exist")
+        data = pd.read_pickle(self.path)
+        categories = self.le.fit_transform(
+        data.category.str.split("/").apply(get_element, position=0))
+        self.labels = torch.tensor(categories)
         self.descriptions = data.product_description.to_list()
         self.num_classes = len(set(self.labels))
         self.encoder = dict(
@@ -275,5 +297,5 @@ class CombinedDataset(Dataset):
         self.max_length = max_length
     
 if __name__ == "__main__":
-    td = ImageDataset("/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl")
-    print(len(td))
+    td = TextDataset("/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl")
+    print(td[0][0].shape)
