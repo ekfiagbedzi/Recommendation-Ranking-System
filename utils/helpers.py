@@ -164,13 +164,12 @@ class ImageDataset(Dataset):
     
     def __init__(self, path: str=None, transformers: object=None):
         super().__init__()
-        self.path = path
-        if not os.path.exists(self.path):
-            raise FileNotFoundError(f"The file {self.path} does not exist")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"The file {path} does not exist")
         features = []
         labels = []
         ind = 0
-        data = pd.read_pickle(self.path)
+        data = pd.read_pickle(path)
         IDs = data.id.tolist()
         categories = ImageDataset.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
@@ -207,13 +206,15 @@ class TextDataset(Dataset):
        into PyTorch models
        Parameters:
               path: (str) - Location of pandas dataframe, default = None
+              transformers: (torchvision.transforms.Compose Object) -
+              List of transformers compiled into a torchvision.transforms.Compose
+              object, default = None
               max_length (int) - Maximum length of sentence allowed, default = 50
         
        Attributes:
-              features: (torch.Tensor) - Tensor containing transformed image
-                        data to train the model
+              descriptions: (torch.Tensor) - Text Embeddings
               labels: (torch.Tensor) - Tensor containing target values to be
-                        predicted from images
+                        predicted from Text
               encoder: (dict) - Convert str target variables into int
               decoder: (dict) - Convert int target variables into str
 
@@ -222,10 +223,9 @@ class TextDataset(Dataset):
     le = LabelEncoder()
     def __init__(self, path: str=None, max_length: int=50):
         super().__init__()
-        self.path = path
-        if not os.path.exists(self.path):
-            raise FileNotFoundError(f"The file {self.path} does not exist")
-        data = pd.read_pickle(self.path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"The file {path} does not exist")
+        data = pd.read_pickle(path)
         categories = self.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         self.labels = torch.tensor(categories)
@@ -258,21 +258,39 @@ class TextDataset(Dataset):
 
 
 class CombinedDataset(Dataset):
+    """The Combined object inherits from torch.utils.data.Dataset. It
+       creates a tuple containing tensors from each image data, text dataset
+       and its corresponding label, which have been transformed into torch tensors
+       so that they can be fed into PyTorch models
+       Parameters:
+              path: (str) - Location of pandas dataframe, default = None
+              transformers: (torchvision.transforms.Compose Object) -
+              List of transformers compiled into a torchvision.transforms.Compose
+              object, default = None
+              max_length (int) - Maximum length of sentence allowed, default = 50
+        
+       Attributes:
+              features: (torch.Tensor) - Tensor containing transformed image
+                        data to train the model
+              descriptions: (torch.Tensor) - Text Embeddings
+              labels: (torch.Tensor) - Tensor containing target values to be
+                        predicted from Text
+              encoder: (dict) - Convert str target variables into int
+              decoder: (dict) - Convert int target variables into str
+    """
     le = LabelEncoder()
-    def __init__(self, transformers: object=None, position: int=0, data: str="/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl", max_length: int=50):
+    def __init__(self, path: str=None, transformers: object=None, max_length: int=50):
         super().__init__()
         self.transformers = transformers
-        self.position = position
         self.max_length = max_length
-        self.data = data
-        if not os.path.exists(self.data):
-            raise FileNotFoundError(f"The file {self.data} does not exist")
-        data = pd.read_pickle(self.data)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"The file {path} does not exist")
+        data = pd.read_pickle(path)
         features = []
         labels = []
         ind = 0
         IDs = data.id.tolist()
-        cats = ImageDataset.le.fit_transform(
+        categories = self.le.fit_transform(
         data.category.str.split("/").apply(get_element, position=0))
         for ID in IDs:
             img_path = "data/cleaned_images/{}_resized.jpg".format(ID)
@@ -282,20 +300,32 @@ class CombinedDataset(Dataset):
                 else:
                     features.append(
                         torchvision.transforms.functional.to_tensor(im))
-            labels.append(torch.tensor(cats[ind]))
+            labels.append(torch.tensor(categories[ind]))
             ind += 1
         self.features = features
         self.labels = labels
         self.descriptions = data.product_description.to_list()
         self.num_classes = len(set(self.labels))
-        #self.encoder = dict(
-        #    zip(self.le.inverse_transform(self.le.transform(self.le.classes_)), self.le.classes_))
-        #self.decoder = dict(enumerate(self.le.classes_))
+        self.encoder = dict(
+            zip(self.le.classes_, self.le.transform(self.le.classes_)))
+        self.decoder = dict(enumerate(self.le.classes_))
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
         self.model.eval()
-        self.max_length = max_length
-    
-if __name__ == "__main__":
-    td = TextDataset("/home/biopythoncodepc/Documents/git_repositories/Recommendation-Ranking-System/data/tables/image_product.pkl")
-    print(td[0][0].shape)
+
+
+    def __getitem__(self, index):
+        label = self.labels[index]
+        sentence = self.descriptions[index]
+        encoded = self.tokenizer.batch_encode_plus([sentence], max_length=self.max_length, padding="max_length", truncation=True)
+        encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        with torch.no_grad():
+            self.description = self.model(**encoded).last_hidden_state.swapaxes(1, 2)
+
+        self.description = self.description.squeeze(0)
+
+        return ((self.features[index], self.description), self.labels[index])
+
+
+    def __len__(self):
+        return len(self.labels)
