@@ -117,7 +117,8 @@ def image_processor(img_path: str=None, transformers: object=None):
 
 
 def text_processor(sentence: str=None, model=None, tokenizer=None, max_length: int=None, truncation: bool=True):
-    """Process text to feed Pytorch model
+    """
+    Process text to feed Pytorch model
        Args:
             sentence: (str) - Text to process
             model: (BertModel) - Model to apply processing
@@ -128,7 +129,6 @@ def text_processor(sentence: str=None, model=None, tokenizer=None, max_length: i
             
        Return:
             Embeddings as 3D torch Tensor of batch_size=1
-    
     """
     encoded = tokenizer.batch_encode_plus([sentence], max_length=max_length, padding="max_length", truncation=truncation)
     encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
@@ -140,7 +140,8 @@ def text_processor(sentence: str=None, model=None, tokenizer=None, max_length: i
 
 
 class ImageDataset(Dataset):
-    """The ImageDataset object inherits from torch.utils.data.Dataset. It
+    """
+    The ImageDataset object inherits from torch.utils.data.Dataset. It
        creates an image dataset containing each image and its corresponding label,
        and transforms them so that they can be fed into PyTorch models
        Parameters:
@@ -155,9 +156,7 @@ class ImageDataset(Dataset):
               labels: (torch.Tensor) - Tensor containing target values to be
                         predicted from images
               encoder: (dict) - Convert str target variables into int
-              decoder: (dict) - Convert int target variables into str
-
-              
+              decoder: (dict) - Convert int target variables into str        
     """
     
     le = LabelEncoder() # encoder/decoder attribute
@@ -200,7 +199,8 @@ class ImageDataset(Dataset):
 
 
 class TextDataset(Dataset):
-    """The TextDataset object inherits from torch.utils.data.Dataset. It
+    """
+    The TextDataset object inherits from torch.utils.data.Dataset. It
        creates an text dataset containing each text and its corresponding label,
        and transforms them into tokens and embeddings, so that they can be fed 
        into PyTorch models
