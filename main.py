@@ -10,7 +10,6 @@ from sklearn import metrics
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 class TL(torch.nn.Module):
