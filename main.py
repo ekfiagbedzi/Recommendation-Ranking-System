@@ -8,11 +8,13 @@ import pandas as pd
 from sklearn import metrics
 
 import torch
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-class TL(torch.nn.Module):
+
+class ImageClassifier(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.resnet50 = torch.hub.load(
@@ -23,6 +25,65 @@ class TL(torch.nn.Module):
         
     def forward(self, X):
         return F.softmax(self.resnet50(X), dim=1)
+
+
+class TextClassifier(nn.Module):
+    def __init__(self, input_size: int = 768):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(192, 128),
+            nn.ReLU(),
+            nn.Linear(128, 13))
+
+    def forward(self, X):
+        return F.softmax(self.layers(X), dim=1)
+
+
+class CombinedModelArchitecture(torch.nn.Module):
+    def __init__(self, input_size: int = 768) -> None:
+        super().__init__()
+        self.resnet50 = torch.hub.load(
+            'NVIDIA/DeepLearningExamples:torchhub',
+            'nvidia_resnet50',
+            pretrained=True)
+        self.resnet50.fc = torch.nn.Linear(2048, 13)
+        self.layers = nn.Sequential(
+            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(192, 128),
+            nn.ReLU(),
+            nn.Linear(128, 13))
+
+        
+    def forward(self, X):
+        return F.softmax(self.resnet50(X), dim=1)
+
+
+
+
+        
 
 
 def train(model, epochs=10):
@@ -69,7 +130,7 @@ if __name__ == "__main__":
     train_data = ImageDataset(data)
     train_loader = DataLoader(train_data, batch_size, True)
 
-    model = TL()
+    model = CombinedModel()
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
