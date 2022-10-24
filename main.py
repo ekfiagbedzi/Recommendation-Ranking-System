@@ -82,6 +82,24 @@ class CombinedModelArchitecture(torch.nn.Module):
 
 
 
+class CombinedModelPreTrained(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        text_state_dict = torch.load("data/final_models/image_model.pt")
+        image_state_dict = torch.load("data/final_models/image_model.pt")
+        text_model = TextClassifier()
+        image_model = ImageClassifier()
+        self.text_model = text_model.load_state_dict(text_state_dict)
+        self.image_model = image_model.load_state_dict(image_state_dict)
+        self.output_layer = torch.nn.Linear(26, 13)
+
+
+    def forward(self, X):
+        (I, T), labels = X
+        text_predictions = self.text_model(T)
+        image_predictions = self.image_model(I)
+        features = torch.cat((text_predictions, image_predictions))
+        return F.softmax(self.output_layer(features), dim=1), labels
 
         
 
