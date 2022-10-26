@@ -2,7 +2,7 @@ import os
 import time
 import json
 from tqdm import tqdm
-from utils.helpers import TextDataSet
+from utils.helpers import TextDataSet, TextClassifier
 
 from sklearn import metrics
 
@@ -11,28 +11,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from torch.utils. tensorboard import SummaryWriter
-class TextClassifier(nn.Module):
-    def __init__(self, input_size: int = 768):
-        super().__init__()
-        self.layers = nn.Sequential(
-            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(192, 128),
-            nn.ReLU(),
-            nn.Linear(128, 13))
 
-    def forward(self, X):
-        return F.softmax(self.layers(X), dim=1)
 
 def train(model, epochs=10):
 
@@ -45,7 +24,7 @@ def train(model, epochs=10):
         for _, (features, labels) in progress_bar:
             optimizer.zero_grad()
             features, labels = features.to(device), labels.to(device)
-            predictions = model(features)
+            predictions = model(features, False)
             train_loss = F.cross_entropy(predictions, labels)
             train_loss.backward()
             predictions = torch.argmax(predictions, dim=1)
