@@ -1,8 +1,9 @@
 import os
+from pickletools import optimize
 import time
 import json
 import tqdm
-from utils.helpers import ImageDataset
+from utils.helpers import CombinedDataset, ImageDataset
 
 import pandas as pd
 from sklearn import metrics
@@ -16,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 class ImageClassifier(torch.nn.Module):
     def __init__(self) -> None:
-        super().__init__()
+        super(ImageClassifier, self).__init__()
         self.resnet50 = torch.hub.load(
             'NVIDIA/DeepLearningExamples:torchhub',
             'nvidia_resnet50',
@@ -24,12 +25,12 @@ class ImageClassifier(torch.nn.Module):
         self.resnet50.fc = torch.nn.Linear(2048, 13)
         
     def forward(self, X):
-        return F.softmax(self.resnet50(X), dim=1)
+        return self.resnet50(X)
 
 
-class TextClassifier(nn.Module):
+class TextClassifier(torch.nn.Module):
     def __init__(self, input_size: int = 768):
-        super().__init__()
+        super(TextClassifier, self).__init__()
         self.layers = nn.Sequential(
             nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -48,7 +49,7 @@ class TextClassifier(nn.Module):
             nn.Linear(128, 13))
 
     def forward(self, X):
-        return F.softmax(self.layers(X), dim=1)
+        return self.layers(X)
 
 
 class CombinedModelArchitecture(torch.nn.Module):
@@ -75,36 +76,37 @@ class CombinedModelArchitecture(torch.nn.Module):
             nn.Linear(192, 128),
             nn.ReLU(),
             nn.Linear(128, 13))
-
-        
-    def forward(self, X):
-        return F.softmax(self.resnet50(X), dim=1)
-
-
-
-class CombinedModelPreTrained(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        text_state_dict = torch.load("data/final_models/image_model.pt")
-        image_state_dict = torch.load("data/final_models/image_model.pt")
-        text_model = TextClassifier()
-        image_model = ImageClassifier()
-        self.text_model = text_model.load_state_dict(text_state_dict)
-        self.image_model = image_model.load_state_dict(image_state_dict)
         self.output_layer = torch.nn.Linear(26, 13)
 
+        
+    def forward(self, image_features, text_features):
+        text_predictions = self.layers(text_features)
+        image_predictions = self.resnet50(image_features)
+        features = torch.cat((text_predictions, image_predictions), dim=1)
+        return F.softmax(self.output_layer(features), dim=1)
 
-    def forward(self, X):
-        (I, T), labels = X
-        text_predictions = self.text_model(T)
-        image_predictions = self.image_model(I)
-        features = torch.cat((text_predictions, image_predictions))
-        return F.softmax(self.output_layer(features), dim=1), labels
+
+
+class EnsembleModelPreTrained(torch.nn.Module):
+    def __init__(self, text_model, image_model) -> None:
+        super(EnsembleModelPreTrained, self).__init__()
+        self.text_model = text_model
+        self.image_model = image_model
+        self.output_layer = torch.nn.Linear(26, 13)
+
+        
+    def forward(self, image_features, text_features):
+        text_predictions = self.text_model(text_features)
+        image_predictions = self.image_model(image_features)
+        features = torch.cat((text_predictions, image_predictions), dim=1)
+        return F.softmax(self.output_layer(features), dim=1)
 
         
 
 
-def train(model, epochs=10):
+
+
+def combined_train(model, epochs=10):
 
     writer = SummaryWriter()
     model.to(device)
@@ -138,17 +140,25 @@ def train(model, epochs=10):
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
+    train_data = CombinedDataset("data/tables/image_product.pkl")
+    train_loader = DataLoader(train_data, batch_size=20, shuffle=True)
+    (a, b), c = next(iter(train_loader))
+    model = CombinedModelPreTrained()
+    print(model.image_model(a))
+    gggg
     batch_size = 32
     epochs = 20
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data = pd.read_pickle("data/tables/image_product.pkl")
-   
+    train_data = CombinedDataset("data/tables/image_product.pkl")
 
-    train_data = ImageDataset(data)
+    model = CombinedModelPreTrained()
+    combined_train(model)
+    zzzzz
+    train_data = CombinedDataset(data)
     train_loader = DataLoader(train_data, batch_size, True)
 
-    model = CombinedModel()
+    model = CombinedModelArchitecture()
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
