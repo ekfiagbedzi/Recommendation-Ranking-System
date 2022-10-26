@@ -75,13 +75,13 @@ class CombinedModelArchitecture(torch.nn.Module):
             nn.Linear(192, 128),
             nn.ReLU(),
             nn.Linear(128, 13))
-        self.output_layer = torch.nn.Linear(13, 13)
+        self.output_layer = torch.nn.Linear(26, 13)
 
         
     def forward(self, image_features, text_features):
         text_predictions = self.layers(text_features)
         image_predictions = self.resnet50(image_features)
-        features = torch.cat((text_predictions, image_predictions))
+        features = torch.cat((text_predictions, image_predictions), dim=1)
         return F.softmax(self.output_layer(features), dim=1)
 
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_data = CombinedDataset("data/tables/image_product.pkl")
-    train_loader = DataLoader(train_data, batch_size=40, shuffle=True)
+    train_loader = DataLoader(train_data, batch_size=20, shuffle=True)
     #data = next(iter(train_loader))
     model = CombinedModelArchitecture()
     print(combined_train(model))
