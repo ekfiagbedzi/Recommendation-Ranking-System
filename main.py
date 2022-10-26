@@ -1,112 +1,18 @@
 import os
-from pickletools import optimize
 import time
 import json
 import tqdm
-from utils.helpers import CombinedDataset, ImageDataset
+from utils.helpers import CombinedDataset, EnsembleArchitecture, EnsemblePreTrained, TextClassifier, ResNet50
 
-import pandas as pd
 from sklearn import metrics
 
 import torch
-from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-class ImageClassifier(torch.nn.Module):
-    def __init__(self) -> None:
-        super(ImageClassifier, self).__init__()
-        self.resnet50 = torch.hub.load(
-            'NVIDIA/DeepLearningExamples:torchhub',
-            'nvidia_resnet50',
-            pretrained=True)
-        self.resnet50.fc = torch.nn.Linear(2048, 13)
-        
-    def forward(self, X):
-        return self.resnet50(X)
-
-
-class TextClassifier(torch.nn.Module):
-    def __init__(self, input_size: int = 768):
-        super(TextClassifier, self).__init__()
-        self.layers = nn.Sequential(
-            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(192, 128),
-            nn.ReLU(),
-            nn.Linear(128, 13))
-
-    def forward(self, X):
-        return self.layers(X)
-
-
-class CombinedModelArchitecture(torch.nn.Module):
-    def __init__(self, input_size: int = 768) -> None:
-        super().__init__()
-        self.resnet50 = torch.hub.load(
-            'NVIDIA/DeepLearningExamples:torchhub',
-            'nvidia_resnet50',
-            pretrained=True)
-        self.resnet50.fc = torch.nn.Linear(2048, 13)
-        self.layers = nn.Sequential(
-            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(192, 128),
-            nn.ReLU(),
-            nn.Linear(128, 13))
-        self.output_layer = torch.nn.Linear(26, 13)
-
-        
-    def forward(self, image_features, text_features):
-        text_predictions = self.layers(text_features)
-        image_predictions = self.resnet50(image_features)
-        features = torch.cat((text_predictions, image_predictions), dim=1)
-        return F.softmax(self.output_layer(features), dim=1)
-
-
-
-class EnsembleModelPreTrained(torch.nn.Module):
-    def __init__(self, text_model, image_model) -> None:
-        super(EnsembleModelPreTrained, self).__init__()
-        self.text_model = text_model
-        self.image_model = image_model
-        self.output_layer = torch.nn.Linear(26, 13)
-
-        
-    def forward(self, image_features, text_features):
-        text_predictions = self.text_model(text_features)
-        image_predictions = self.image_model(image_features)
-        features = torch.cat((text_predictions, image_predictions), dim=1)
-        return F.softmax(self.output_layer(features), dim=1)
-
-        
-
-
-
-
-def combined_train(model, epochs=10):
+def train(model, epochs=10):
 
     writer = SummaryWriter()
     model.to(device)
@@ -114,10 +20,10 @@ def combined_train(model, epochs=10):
     batch_ind = 0
     for epoch in range(epochs):
         progress_bar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
-        for _, (features, labels) in progress_bar:
+        for _, ((image_features, text_features), labels) in progress_bar:
             optimizer.zero_grad()
-            features, labels = features.to(device), labels.to(device)
-            predictions = model(features)
+            image_features, text_features, labels = image_features.to(device), text_features.to(device), labels.to(device)
+            predictions = model(image_features, text_features)
             train_loss = F.cross_entropy(predictions, labels)
             train_loss.backward()
             predictions = torch.argmax(predictions, dim=1)
@@ -140,25 +46,16 @@ def combined_train(model, epochs=10):
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
-    train_data = CombinedDataset("data/tables/image_product.pkl")
-    train_loader = DataLoader(train_data, batch_size=20, shuffle=True)
-    (a, b), c = next(iter(train_loader))
-    model = CombinedModelPreTrained()
-    print(model.image_model(a))
-    gggg
+    epochs = 10
     batch_size = 32
-    epochs = 20
-    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_data = CombinedDataset("data/tables/image_product.pkl")
-
-    model = CombinedModelPreTrained()
-    combined_train(model)
-    zzzzz
-    train_data = CombinedDataset(data)
-    train_loader = DataLoader(train_data, batch_size, True)
-
-    model = CombinedModelArchitecture()
+    train_loader = DataLoader(train_data, batch_size=20, shuffle=True)
+    text_model = TextClassifier()
+    image_model = ResNet50()
+    text_model.load_state_dict(torch.load("final_models/text_model.pt"))
+    image_model.load_state_dict(torch.load("final_models/image_model.pt"))
+    model = EnsemblePreTrained(text_model, image_model)
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
