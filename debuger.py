@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 class ImageClassifier(torch.nn.Module):
     def __init__(self) -> None:
-        super().__init__()
+        super(ImageClassifier, self).__init__()
         self.resnet50 = torch.hub.load(
             'NVIDIA/DeepLearningExamples:torchhub',
             'nvidia_resnet50',
@@ -25,12 +25,12 @@ class ImageClassifier(torch.nn.Module):
         self.resnet50.fc = torch.nn.Linear(2048, 13)
         
     def forward(self, X):
-        return F.softmax(self.resnet50(X), dim=1)
+        return self.resnet50(X)
 
 
 class TextClassifier(torch.nn.Module):
     def __init__(self, input_size: int = 768):
-        super().__init__()
+        super(TextClassifier, self).__init__()
         self.layers = nn.Sequential(
             nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -49,38 +49,22 @@ class TextClassifier(torch.nn.Module):
             nn.Linear(128, 13))
 
     def forward(self, X):
-        return F.softmax(self.layers(X), dim=1)
+        return self.layers(X)
 
-class CombinedModelArchitecture(torch.nn.Module):
-    def __init__(self, input_size: int = 768) -> None:
-        super().__init__()
-        self.resnet50 = torch.hub.load(
-            'NVIDIA/DeepLearningExamples:torchhub',
-            'nvidia_resnet50',
-            pretrained=True)
-        self.resnet50.fc = torch.nn.Linear(2048, 13)
-        self.layers = nn.Sequential(
-            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(192, 128),
-            nn.ReLU(),
-            nn.Linear(128, 13))
+
+
+
+class EnsembleModelPreTrained(torch.nn.Module):
+    def __init__(self, text_model, image_model) -> None:
+        super(EnsembleModelPreTrained, self).__init__()
+        self.text_model = text_model
+        self.image_model = image_model
         self.output_layer = torch.nn.Linear(26, 13)
 
         
     def forward(self, image_features, text_features):
-        text_predictions = self.layers(text_features)
-        image_predictions = self.resnet50(image_features)
+        text_predictions = self.text_model(text_features)
+        image_predictions = self.image_model(image_features)
         features = torch.cat((text_predictions, image_predictions), dim=1)
         return F.softmax(self.output_layer(features), dim=1)
 
@@ -122,6 +106,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_data = CombinedDataset("data/tables/image_product.pkl")
     train_loader = DataLoader(train_data, batch_size=20, shuffle=True)
-    #data = next(iter(train_loader))
-    model = CombinedModelArchitecture()
-    print(combined_train(model))
+    text_model = TextClassifier()
+    image_model = ImageClassifier()
+    text_model.load_state_dict(torch.load("final_models/text_model.pt"))
+    image_model.load_state_dict(torch.load("final_models/image_model.pt"))
+    model = EnsembleModelPreTrained(text_model, image_model)
+    combined_train(model)
