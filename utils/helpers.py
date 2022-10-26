@@ -8,6 +8,8 @@ from sklearn.preprocessing import LabelEncoder
 
 import torch
 import torchvision
+from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 from transformers import BertTokenizer, BertModel
 
@@ -329,3 +331,91 @@ class CombinedDataset(Dataset):
 
     def __len__(self):
         return len(self.labels)
+
+class ResNet50(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.resnet50 = torch.hub.load(
+            'NVIDIA/DeepLearningExamples:torchhub',
+            'nvidia_resnet50',
+            pretrained=True)
+        self.resnet50.fc = torch.nn.Linear(2048, 13)
+        
+    def forward(self, X, combined: bool=True):
+        if combined:
+            return self.resnet50(X)
+        return F.softmax(self.resnet50(X), dim=1)
+
+class TextClassifier(torch.nn.Module):
+    def __init__(self, input_size: int = 768):
+        super(TextClassifier, self).__init__()
+        self.layers = nn.Sequential(
+            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(192, 128),
+            nn.ReLU(),
+            nn.Linear(128, 13))
+
+    def forward(self, X, combined: bool=True):
+        if combined:
+            return self.layers(X)
+        return F.softmax(self.layers(X), dim=1)
+
+
+class EnsembleArchitecture(torch.nn.Module):
+    def __init__(self, input_size: int = 768) -> None:
+        super().__init__()
+        self.resnet50 = torch.hub.load(
+            'NVIDIA/DeepLearningExamples:torchhub',
+            'nvidia_resnet50',
+            pretrained=True)
+        self.resnet50.fc = torch.nn.Linear(2048, 13)
+        self.layers = nn.Sequential(
+            nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(192, 128),
+            nn.ReLU(),
+            nn.Linear(128, 13))
+        self.output_layer = torch.nn.Linear(26, 13)
+
+        
+    def forward(self, image_features, text_features):
+        text_predictions = self.layers(text_features)
+        image_predictions = self.resnet50(image_features)
+        features = torch.cat((text_predictions, image_predictions), dim=1)
+        return F.softmax(self.output_layer(features), dim=1)
+
+
+class EnsemblePreTrained(torch.nn.Module):
+    def __init__(self, text_model, image_model) -> None:
+        super(EnsemblePreTrained, self).__init__()
+        self.text_model = text_model
+        self.image_model = image_model
+        self.output_layer = torch.nn.Linear(26, 13)
+
+        
+    def forward(self, image_features, text_features):
+        text_predictions = self.text_model(text_features)
+        image_predictions = self.image_model(image_features)
+        features = torch.cat((text_predictions, image_predictions), dim=1)
+        return F.softmax(self.output_layer(features), dim=1)
