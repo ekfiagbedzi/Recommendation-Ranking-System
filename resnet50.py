@@ -2,7 +2,7 @@ import os
 import time
 import json
 import tqdm
-from utils.helpers import ImageDataset
+from utils.helpers import ImageDataset, ResNet50
 
 import pandas as pd
 from sklearn import metrics
@@ -11,18 +11,6 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
-class TL(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.resnet50 = torch.hub.load(
-            'NVIDIA/DeepLearningExamples:torchhub',
-            'nvidia_resnet50',
-            pretrained=True)
-        self.resnet50.fc = torch.nn.Linear(2048, 13)
-        
-    def forward(self, X):
-        return F.softmax(self.resnet50(X), dim=1)
 
 
 def train(model, epochs=10):
@@ -60,16 +48,16 @@ def train(model, epochs=10):
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     batch_size = 32
-    epochs = 20
+    epochs = 1
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data = pd.read_pickle("data/tables/image_product.pkl")
+    #data = pd.read_pickle("data/tables/image_product.pkl")
    
 
-    train_data = ImageDataset(data)
+    train_data = ImageDataset("data/tables/image_product.pkl")
     train_loader = DataLoader(train_data, batch_size, True)
 
-    model = TL()
+    model = ResNet50()
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
