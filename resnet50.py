@@ -50,9 +50,7 @@ if __name__ == "__main__":
     batch_size = 32
     epochs = 1
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #data = pd.read_pickle("data/tables/image_product.pkl")
-   
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
     train_data = ImageDataset("data/tables/image_product.pkl")
     train_loader = DataLoader(train_data, batch_size, True)
