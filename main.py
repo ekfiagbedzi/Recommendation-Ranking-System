@@ -72,7 +72,7 @@ if __name__ == "__main__":
         "model_evaluation/{}/weights/{}.pt".format(ts, epochs))
     
     # save label decoder
-    with open("image_decoder.json", "a+") as f:
+    with open("combined_decoder.json", "a+") as f:
         json.dump(train_data.decoder, f)
 
     # save model metrics
