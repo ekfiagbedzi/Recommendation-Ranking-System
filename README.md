@@ -64,3 +64,4 @@ I defined a function which takes in a model and number of epochs. In this funcit
 #### Metrics of the model
 After 20 epochs of batch size 32, I had a training accuracy of ~10%
 
+#### Combined model
