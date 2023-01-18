@@ -6,6 +6,7 @@ from utils.helpers import ImageDataset, ResNet50
 
 import pandas as pd
 from sklearn import metrics
+from sklearn.model_selection import train_test_split
 
 import torch
 import torch.nn.functional as F
@@ -21,6 +22,7 @@ def train(model, epochs=10):
     batch_ind = 0
     for epoch in range(epochs):
         progress_bar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
+        model.train()
         for _, (features, labels) in progress_bar:
             optimizer.zero_grad()
             features, labels = features.to(device), labels.to(device)
@@ -33,32 +35,64 @@ def train(model, epochs=10):
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
             writer.add_scalar("Train Accuracy", train_accuracy, batch_ind)
+
+            with torch.no_grad():
+                model.eval()
+                for features, labels in validation_loader:
+                    features, labels = features.to(device), labels.to(device)
+                    predictions = model(features)
+                    validation_loss = F.cross_entropy(predictions, labels)
+                    #validation_accuracy = metrics.accuracy_score(labels, predictions)
+                    writer.add_scalar("Validation Loss", validation_loss.item(), batch_ind)
+                    #writer.add_scalar("Validation Accuracy", validation_accuracy, batch_ind)
                     
 
             batch_ind += 1            
-            progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
-                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2)))
+            progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}" \
+                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2), round(validation_loss.item(), 2), round(validation_loss.item(), 2)))
 
     return {
         "Epoch": epoch,
         "TrainLoss": train_loss.item(),
-        "TrainAccuracy": train_accuracy}
+        "TrainAccuracy": train_accuracy,
+        "ValidationLoss": validation_loss,
+        "ValidationAccuracy": validation_loss}
+
+
+def test(model):
+    with torch.no_grad():
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+        model.eval()
+        for features, labels in test_loader:
+            features, labels = features.to(device), labels.to(device)
+            predictions = model(features)
+            test_loss = F.cross_entropy(predictions, labels)
+        print("Test Loss = {}".format(test_loss.item()))
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
-    batch_size = 32
+    batch_size = 5000
     epochs = 1
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
-    train_data = ImageDataset("data/tables/image_product.pkl")
+    data = ImageDataset("data/tables/image_product.pkl")
+    train_data, test_data = train_test_split(data, test_size=0.3, shuffle=True)
+    validation_data, test_data = train_test_split(test_data, test_size=0.4, shuffle=True)
     train_loader = DataLoader(train_data, batch_size, True)
+
+    train_loader = DataLoader(train_data, batch_size, True)
+    test_loader = DataLoader(test_data)
+    validation_loader = DataLoader(validation_data)
 
     model = ResNet50()
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
+
+    test_metrics = test(model)
 
 
     ts = int(time.time())
@@ -82,4 +116,5 @@ if __name__ == "__main__":
             {"TrainingTime": (end_time-start_time)/60,
             "BatchSize": batch_size,
             "Epochs": epochs,
-            "train_metrics": train_metrics}, f)
+            "train_metrics": train_metrics,
+            "test_metrics": test_metrics}, f)
