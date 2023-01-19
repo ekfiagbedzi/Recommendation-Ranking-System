@@ -20,6 +20,7 @@ def train(model, epochs=10):
     model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     batch_ind = 0
+    validation_loss = 0
     for epoch in range(epochs):
         progress_bar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
         model.train()
@@ -35,28 +36,39 @@ def train(model, epochs=10):
             optimizer.step()
             writer.add_scalar("Train Loss", train_loss.item(), batch_ind)
             writer.add_scalar("Train Accuracy", train_accuracy, batch_ind)
+            batch_ind += 1
+            if validation_loss == 0:       
+                progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
+                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2)))
+            else:
+                progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {} Val Loss = {} Val Acc = {}" \
+                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2), round(validation_loss.item(), 2), round(validation_accuracy, 2)))
 
-            with torch.no_grad():
-                model.eval()
-                for features, labels in validation_loader:
-                    features, labels = features.to(device), labels.to(device)
-                    predictions = model(features)
-                    validation_loss = F.cross_entropy(predictions, labels)
-                    #validation_accuracy = metrics.accuracy_score(labels, predictions)
-                    writer.add_scalar("Validation Loss", validation_loss.item(), batch_ind)
-                    #writer.add_scalar("Validation Accuracy", validation_accuracy, batch_ind)
-                    
+   
+        with torch.no_grad():
+            model.eval()                
+            features, labels = next(iter(validation_loader))
+            features, labels = features.to(device), labels.to(device)
+            predictions = model(features)
+            validation_loss = F.cross_entropy(predictions, labels)
+            predictions = torch.argmax(predictions, dim=1)
+            validation_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+                
+                
+            writer.add_scalar(
+                "Validation Loss", validation_loss.item(), batch_ind)
+            writer.add_scalar(
+                "Validation Accuracy", validation_accuracy, batch_ind)       
 
             batch_ind += 1            
-            progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}" \
-                   .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2), round(validation_loss.item(), 2), round(validation_loss.item(), 2)))
-
+            
+        
+            
     return {
         "Epoch": epoch,
         "TrainLoss": train_loss.item(),
         "TrainAccuracy": train_accuracy,
-        "ValidationLoss": validation_loss,
-        "ValidationAccuracy": validation_loss}
+        }
 
 
 def test(model):
@@ -64,17 +76,19 @@ def test(model):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
         model.eval()
-        for features, labels in test_loader:
-            features, labels = features.to(device), labels.to(device)
-            predictions = model(features)
-            test_loss = F.cross_entropy(predictions, labels)
-        print("Test Loss = {}".format(test_loss.item()))
+        features, labels = next(iter(test_loader))
+        features, labels = features.to(device), labels.to(device)
+        predictions = model(features)
+        test_loss = F.cross_entropy(predictions, labels)
+        predictions = torch.argmax(predictions, dim=1)
+        test_accuracy = metrics.accuracy_score(labels.cpu(), predictions.cpu())
+        print("Test Loss = {} Test Accuracy = {}".format(test_loss.item(), test_accuracy))
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
-    batch_size = 5000
-    epochs = 1
+    batch_size = 64
+    epochs = 1000
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
@@ -84,15 +98,16 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_data, batch_size, True)
 
     train_loader = DataLoader(train_data, batch_size, True)
-    test_loader = DataLoader(test_data)
-    validation_loader = DataLoader(validation_data)
+    test_loader = DataLoader(test_data, len(test_data))
+    validation_loader = DataLoader(validation_data, len(validation_data))
+
 
     model = ResNet50()
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
 
-    test_metrics = test(model)
+    test(model)
 
 
     ts = int(time.time())
@@ -116,5 +131,4 @@ if __name__ == "__main__":
             {"TrainingTime": (end_time-start_time)/60,
             "BatchSize": batch_size,
             "Epochs": epochs,
-            "train_metrics": train_metrics,
-            "test_metrics": test_metrics}, f)
+            "train_metrics": train_metrics}, f)
