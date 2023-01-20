@@ -41,7 +41,7 @@ def train(model, epochs=10):
                 progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {}" \
                    .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2)))
             else:
-                progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {} Val Loss = {} Val Acc = {}" \
+                progress_bar.set_description("Epoch {}: Train Loss = {} Train Accuracy = {} Validation Loss = {} Validation Accuracy = {}" \
                    .format(epoch+1, round(train_loss.item(), 2), round(train_accuracy, 2), round(validation_loss.item(), 2), round(validation_accuracy, 2)))
 
    
@@ -68,6 +68,8 @@ def train(model, epochs=10):
         "Epoch": epoch,
         "TrainLoss": train_loss.item(),
         "TrainAccuracy": train_accuracy,
+        "ValidationLoss": validation_loss.item(),
+        "ValidationAccuracy": validation_accuracy,
         }
 
 
@@ -88,7 +90,7 @@ def test(model):
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     batch_size = 64
-    epochs = 1000
+    epochs = 1
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
@@ -122,7 +124,7 @@ if __name__ == "__main__":
     
     # save label decoder
     with open("image_decoder.json", "a+") as f:
-        json.dump(train_data.decoder, f)
+        json.dump(data.decoder, f)
 
     # save model metrics
     with open(
