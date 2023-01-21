@@ -18,7 +18,7 @@ def train(model, epochs=10):
 
     writer = SummaryWriter()
     model.to(device)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     batch_ind = 0
     validation_loss = 0
     for epoch in range(epochs):
@@ -78,7 +78,7 @@ def test(model):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
         model.eval()
-        features, labels = next(iter(test_loader))
+        #features, labels = next(iter(test_loader))
         features, labels = features.to(device), labels.to(device)
         predictions = model(features)
         test_loss = F.cross_entropy(predictions, labels)
@@ -89,19 +89,18 @@ def test(model):
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
-    batch_size = 64
-    epochs = 1
+    batch_size = 128
+    epochs = 400
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
     data = ImageDataset("data/tables/image_product.pkl")
-    train_data, test_data = train_test_split(data, test_size=0.3, shuffle=True)
-    validation_data, test_data = train_test_split(test_data, test_size=0.4, shuffle=True)
-    train_loader = DataLoader(train_data, batch_size, True)
+    train_data, test_data = train_test_split(data, test_size=0.10, shuffle=True)
+    #validation_data, test_data = train_test_split(test_data, test_size=0.4, shuffle=True)
 
     train_loader = DataLoader(train_data, batch_size, True)
-    test_loader = DataLoader(test_data, len(test_data))
-    validation_loader = DataLoader(validation_data, len(validation_data))
+    #test_loader = DataLoader(test_data, len(test_data))
+    validation_loader = DataLoader(test_data, len(test_data))
 
 
     model = ResNet50()
@@ -109,7 +108,7 @@ if __name__ == "__main__":
     train_metrics = train(model, epochs)
     end_time = time.time()
 
-    test(model)
+    #test(model)
 
 
     ts = int(time.time())
