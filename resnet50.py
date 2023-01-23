@@ -90,7 +90,7 @@ def test(model):
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     batch_size = 128
-    epochs = 30
+    epochs = 60
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
