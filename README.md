@@ -62,6 +62,6 @@ After each convolutional layer was a ReLU activation funciton and a MaxPooling l
 I defined a function which takes in a model and number of epochs. In this funciton, I defined a for lood that loops through the batched data and passes them through my model, make predictions and calulcate the `loss` of the predictions using `cross-entropy loss`, Performs backpropagation, and uses the `Adam optimizer` to update the weights of the network. The accuracy of the model is also calculated. These metrics were visualised using tensorboard as shown below
 
 #### Metrics of the model
-After 20 epochs of batch size 32, I had a training accuracy of ~10%
+After 30 epochs of batch size 128, I had a training accuracy of ~10%
 
 #### Combined model
