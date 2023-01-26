@@ -44,7 +44,7 @@ I did transfer learning, where I used the pre-trained model ResNet50 from torchv
 I defined a function which takes in a model and number of epochs. In this funciton, I defined a for lood that loops through the batched data and passes them through my model, make predictions and calulcate the `loss` of the predictions using `cross-entropy loss`, Performs backpropagation, and uses the `SGD optimizer` to update the weights of the network. The accuracy of the model is also calculated. These metrics were visualised using tensorboard as shown below
 
 #### Metrics of the model
-After 160 epochs of batch size 128, I had a training accuracy of ~60, validation and testing accuracy of ~25
+After 30  epochs of batch size 128, I had a training accuracy of ~60, validation and testing accuracy of ~25
 
 
 ### Training a model on text using CNN in Pytorch
