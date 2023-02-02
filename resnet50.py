@@ -104,6 +104,10 @@ if __name__ == "__main__":
 
 
     model = ResNet50()
+    for para in model.parameters():
+        params = model.state_dict()
+        print(params.keys())
+        zzzz
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
