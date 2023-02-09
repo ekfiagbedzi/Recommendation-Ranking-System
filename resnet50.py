@@ -104,6 +104,15 @@ if __name__ == "__main__":
 
 
     model = ResNet50()
+    params = model.state_dict()
+    #print(params.keys())
+    for name, para in model.named_parameters():
+        if "resnet50.fc" in name:
+            print(name)
+        #para.requires_grad = False
+        #print(para.keys())
+    zzzz
+
     for para in model.parameters():
         params = model.state_dict()
         print(params.keys())
