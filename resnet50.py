@@ -105,18 +105,14 @@ if __name__ == "__main__":
 
     model = ResNet50()
     params = model.state_dict()
-    #print(params.keys())
-    for name, para in model.named_parameters():
-        if "resnet50.fc" in name:
-            print(name)
-        #para.requires_grad = False
-        #print(para.keys())
-    zzzz
 
-    for para in model.parameters():
-        params = model.state_dict()
-        print(params.keys())
-        zzzz
+    for name, param in model.named_parameters():
+        param.requires_grad = False
+        if "resnet50.fc" in name:
+            param.requires_grad = True
+        if "resnet50.layers.3.2.bn3" in name:
+            param.requires_grad = True
+
     start_time = time.time()
     train_metrics = train(model, epochs)
     end_time = time.time()
@@ -146,3 +142,5 @@ if __name__ == "__main__":
             "BatchSize": batch_size,
             "Epochs": epochs,
             "train_metrics": train_metrics}, f)
+
+####
