@@ -89,9 +89,8 @@ def test(model):
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
+
     batch_size = 128
-    epochs = 60
-    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
     data = ImageDataset("data/tables/image_product.pkl")
@@ -102,16 +101,11 @@ if __name__ == "__main__":
     #test_loader = DataLoader(test_data, len(test_data))
     validation_loader = DataLoader(test_data, len(test_data))
 
-
+    
+    epochs = 1000
     model = ResNet50()
     params = model.state_dict()
 
-    for name, param in model.named_parameters():
-        param.requires_grad = False
-        if "resnet50.fc" in name:
-            param.requires_grad = True
-        if "resnet50.layers.3.2.bn3" in name:
-            param.requires_grad = True
 
     start_time = time.time()
     train_metrics = train(model, epochs)
@@ -142,5 +136,3 @@ if __name__ == "__main__":
             "BatchSize": batch_size,
             "Epochs": epochs,
             "train_metrics": train_metrics}, f)
-
-####
