@@ -1,4 +1,4 @@
-from utils.helpers import image_processor
+import sys
 
 from PIL import Image
 
@@ -16,9 +16,15 @@ transformers = transforms.Compose(
                         std=[0.229, 0.224, 0.225])]
 )
 
-img = image_processor("data/cleaned_images/0a1baaa8-4556-4e07-a486-599c0"\
-        "5cce76c_resized.jpg",
-    transformers=transformers)
 
-print(img, img.shape)
+def process_image(image_id, transformers: object=None):
+    with Image.open("data/cleaned_images/{}_resized.jpg".format(image_id)) as im:
+        if transformers:
+            im = (transformers(im))
+        else:
+            im = transforms.functional.to_tensor(im)
+    return im.unsqueeze(dim=0)
 
+
+if __name__ == "__main__":
+    (sys.argv[1], sys.argv[2])
