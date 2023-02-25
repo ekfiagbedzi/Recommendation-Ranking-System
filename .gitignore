@@ -5,3 +5,4 @@ recommendation
 *__pycache*
 runs
 *.pt
+image_embeddings.json
