@@ -102,7 +102,7 @@ if __name__ == "__main__":
     validation_loader = DataLoader(test_data, len(test_data))
 
     
-    epochs = 1000
+    epochs = 2
     model = ResNet50()
     params = model.state_dict()
 
