@@ -1,7 +1,4 @@
 import sys
-
-from PIL import Image
-
 from torchvision import transforms
 
 
@@ -17,14 +14,14 @@ transformers = transforms.Compose(
 )
 
 
-def process_image(image_id, transformers: object=None):
-    with Image.open("data/cleaned_images/{}_resized.jpg".format(image_id)) as im:
-        if transformers:
-            im = (transformers(im))
-        else:
-            im = transforms.functional.to_tensor(im)
+def image_processor(im: object=None, transformers: object=None):
+    if transformers:
+        im = transformers(im)
+    else:
+        im = transforms.functional.to_tensor(im)
     return im.unsqueeze(dim=0)
 
 
+
 if __name__ == "__main__":
-    (sys.argv[1], sys.argv[2])
+    image_processor(sys.argv[1], sys.argv[2])
