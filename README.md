@@ -1,5 +1,10 @@
 # Recommendation Ranking System
-A model that finds, recommends and ranks products, based on a user's search and previous interactions
+## Description
+This project involved the development and training of model that finds, recommends and ranks products, based on a user's search and previous interactions using Facebook's AI Similarity Search **(FAISS)**. Specifically, this project involved,
+- Building a feature extraction model that generates embeddings from images and text data
+- Generate a FAISS vector similarity search model to compare and select the most similar embeddings from different sets of embeddings
+- Deploying both the Feature Extraction and FAISS models to an API which can serve requests from a potential customer
+- Containerising the models and files to ensure easier updating after retraining the models
 
 ### Description of Datasets
 Three datasets are available for this project.
