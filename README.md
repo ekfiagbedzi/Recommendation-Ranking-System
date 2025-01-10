@@ -50,8 +50,9 @@ an image and a text and hit run. The most similar image to your input will then 
 │   ├── combined_decoder.json
 │   ├── image_decoder.json
 │   └── text_decoder.json
+├── notes
+│   └── rout.md
 ├── requirements.txt
-├── rout.md
 ├── testdata
 │   └── dog.jpg
 └── utils
