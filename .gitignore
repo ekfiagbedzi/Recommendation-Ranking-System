@@ -1,8 +1,0 @@
-.vscode
-mypython
-recommendation
-*.egg-info
-*__pycache*
-runs
-*.pt
-image_embeddings.json
