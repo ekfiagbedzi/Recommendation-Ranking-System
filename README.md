@@ -15,48 +15,51 @@ an image and a text and hit run. The most similar image to your input will then 
 
 ## File structure
 .
+├── LICENSE
+├── README.md
 ├── app
+│   ├── Dockerfile
 │   ├── api.py
 │   ├── docker-compose.yml
-│   ├── Dockerfile
 │   ├── image_decoder.json
 │   ├── image_processor.py
 │   └── requirements.txt
-├── bert_model.py
-├── classifier.py
-├── combined_decoder.json
-├── custom_architecture.py
+├── bin
+│   ├── bert_model.py
+│   ├── classifier.py
+│   ├── custom_architecture.py
+│   ├── faiss_model.py
+│   ├── faiss_search.py
+│   ├── featureX.py
+│   ├── image_processor.py
+│   ├── main.py
+│   ├── regressor.py
+│   ├── request.py
+│   ├── resnet50.py
+│   ├── setup.py
+│   └── text_processor.py
 ├── data
 │   ├── cleaned_images
 │   └── tables
-├── dog.jpg
-├── faiss_model.py
-├── faiss_search.py
-├── featureX.py
-├── image_decoder.json
-├── image_processor.py
-├── LICENSE
-├── main.py
 ├── model_evaluation
 │   ├── 1664455419
 │   ├── 1664495576
 │   ├── 1666666792
 │   └── 1666858434
-├── README.md
-├── regressor.py
-├── request.py
+├── models
+│   ├── combined_decoder.json
+│   ├── image_decoder.json
+│   └── text_decoder.json
 ├── requirements.txt
-├── resnet50.py
 ├── rout.md
-├── setup.py
-├── text_decoder.json
-├── text_processor.py
+├── testdata
+│   └── dog.jpg
 └── utils
+    ├── __init__.py
     ├── clean_image_data.py
     ├── clean_tabular_data.ipynb
     ├── clean_tabular_data.py
-    ├── helpers.py
-    └── __init__.py
+    └── helpers.py
 
 
 ## Licence Information
